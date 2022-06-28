@@ -12,3 +12,5 @@
 *.vsix
 
 __pycache__
+
+/tmp/*
