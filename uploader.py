@@ -2,9 +2,12 @@ from datetime import datetime
 import sys
 import time
 from abstraction.IDataBaseService import IDataBaseService
+from analyzer import Analyzer
+from analyzerProcessor import AnalyzerProcessor
 from models.event import Event
 from models.uploader import UploaderModel
 from streamLauncher import StreamLauncher
+from multiprocessing.pool import ThreadPool
 
 class Uploader:
     def __init__(self, clusterName : str, language : str, dataBaseService : IDataBaseService) -> None:
@@ -18,7 +21,15 @@ class Uploader:
     
     def runStreaming(self, event : Event) -> None:
         streamLauncher = StreamLauncher(event)
+        streamAnalyzer = Analyzer(event)
+        pool = ThreadPool(processes=1)
+        asyncResult = pool.apply_async(streamAnalyzer.launchAnalyzer, ())
         streamLauncher.runStreaming()
+        allStatistics = asyncResult.get()
+        analyszerProcessor = AnalyzerProcessor(allStatistics)
+        result = analyszerProcessor.launchAnalyze()
+        print(result)
+        
     
     def run(self) -> None:
         try:

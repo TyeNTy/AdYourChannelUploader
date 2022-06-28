@@ -18,11 +18,12 @@ class StreamLauncher:
         self.fullPathVideoPipe = os.path.join(self.pathToTmpVideoPipe, self.tmpVideoPipeName)
     
     def launchListeningPipe(self):
-        try:
-            pls.stream_file("pylivestream.ini", websites=["twitch"], video_file=self.fullPathVideoPipe, loop=False, assume_yes=True)
-        except KeyError:
-            print("End of stream :")
-            print(self.event)
+        while(datetime.now() < self.event.endTime):
+            try:
+                pls.stream_file("pylivestream.ini", websites=["twitch"], video_file=self.fullPathVideoPipe, loop=False, assume_yes=True)
+            except KeyError:
+                print("End of stream :")
+                print(self.event)
 
     def runStreaming(self):
         # Collect arguments
@@ -72,7 +73,11 @@ class StreamLauncher:
         timer = Timer(1, self.launchListeningPipe)
         
         stream = streams[maxQuality]
-        fd = stream.open()
+        for _ in range(10):
+            try:
+                fd = stream.open()
+            except StreamError as err:
+                print(err)
         timer.start()
         
         while(datetime.now() < self.event.endTime):
