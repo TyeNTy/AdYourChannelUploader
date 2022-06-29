@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from models.event import Event
 from models.uploader import UploaderModel
 from uploader import Uploader
 from services.databaseService import DataBaseService
@@ -22,5 +23,7 @@ def initUploader() -> Uploader:
     
     databaseService = DataBaseService(properties["DATABASE_CONNECTION_STRING"], properties["DATABASE_NAME"])
     
-    uploader = Uploader(properties["CLUSTER_NAME"], properties["LANGUAGE"], databaseService)
+    databaseService.createEvent(Event(None, "rlgym","cluster1", 0, datetime.utcnow(), datetime.utcnow() + timedelta(minutes=2), "fr", "test", ["this", "is", "a", "test"]))
+    
+    uploader = Uploader(properties["CLUSTER_NAME"], properties["LANGUAGE"], databaseService, properties["APP_ID"], properties["APP_SECRET"], properties["GET_STREAM_ID"])
     uploader.run()

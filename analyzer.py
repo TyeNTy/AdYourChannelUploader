@@ -8,13 +8,16 @@ from models.statistic import Statistic
 from utils.twitchAPI import getIDOfAChannel, createListOfChatters
 
 class Analyzer:
-    def __init__(self, event : Event) -> None:
+    def __init__(self, event : Event, appID : str, appSecret : str) -> None:
         self.event = event
         self.allStatistics = []
         self.alreadyFollowed = []
         self.alreadyChatting = []
         
-        self.twitchAPI = Twitch("udciak7gm0oldx66jma1azzu4dsgnm", "ovrust91e43pnazeeb7vs2qq4eyycy")
+        self.appID = appID
+        self.appSecret = appSecret
+        
+        self.twitchAPI = Twitch(self.appID, self.appSecret)
         self.idOfChannel = getIDOfAChannel(self.twitchAPI, self.event.twitchUserName)
     
     def initAlreadyFollowed(self) -> None:
@@ -47,10 +50,10 @@ class Analyzer:
         print(f"Starting to analyze the channel {self.event.twitchUserName}...")
         self.initAlreadyChatting()
         allStats = []
-        while(datetime.now() < self.event.endTime):
+        while(datetime.utcnow() < self.event.endTime):
             currentChattersOurChannel = createListOfChatters("adyourchanneldev")
             currentChattersOtherChannel = createListOfChatters(self.event.twitchUserName)
-            currentStistic = Statistic(datetime.now(), currentChattersOurChannel, currentChattersOtherChannel, self.alreadyFollowed, len(currentChattersOtherChannel), len(self.alreadyFollowed), 0)
+            currentStistic = Statistic(datetime.utcnow(), currentChattersOurChannel, currentChattersOtherChannel, self.alreadyFollowed, len(currentChattersOtherChannel), len(self.alreadyFollowed), 0)
             allStats.append(currentStistic)
             sleep(5)
         print(f"Analyzing the channel {self.event.twitchUserName}... Done")

@@ -21,14 +21,22 @@ class DataBaseService:
         if (result is None):
             return None
         else:
-            result = sorted(filter(lambda event : event["startTime"] > datetime.now() - timedelta(minutes=1) and event["startTime"] < datetime.now() + timedelta(minutes=1), result), key=lambda event : event["startTime"])
+            result = sorted(filter(lambda event : event["startTime"] > datetime.utcnow() - timedelta(minutes=1) and event["startTime"] < datetime.utcnow() + timedelta(minutes=1), result), key=lambda event : event["startTime"])
             if(len(result) == 0):
                 return None
             return Event.loadFromDictionary(result[0])
 
-    def createEvent(self, Event) -> Event:
-        """Create the next event in the data set."""
-        raise NotImplementedError
+    def createEvent(self, event : Event) -> Event:
+        """Create an event in the data set."""
+        collection = self.database.get_collection(event.language)
+        alreadyExistingEvent = collection.find({"clusterName" : event.clusterName, "uploaderID" : event.uploaderID, "language" : event.language, "startTime" : {'$gte' : event.startTime, '$lte' : event.endTime}})
+        if alreadyExistingEvent is not None:
+            toSend = vars(event)
+            toSend.pop("id")
+            collection.insert_one(vars(event))
+            return event
+        print(f"Event already exists : {alreadyExistingEvent}")
+        return None
 
     def deleteEvent(self, Event):
         """Delete the event in the data set."""

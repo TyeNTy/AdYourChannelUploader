@@ -10,18 +10,23 @@ from streamLauncher import StreamLauncher
 from multiprocessing.pool import ThreadPool
 
 class Uploader:
-    def __init__(self, clusterName : str, language : str, dataBaseService : IDataBaseService) -> None:
+    def __init__(self, clusterName : str, language : str, dataBaseService : IDataBaseService, appID : str, appSecret : str, getStreamID : str) -> None:
         self.dataBaseService = dataBaseService
         self.language = language
         self.clusterName = clusterName
         self.id = 0
         
-        newUploaderModel = dataBaseService.addUploader(clusterName, UploaderModel(clusterName, language, datetime.now()))
+        self.appID = appID
+        self.appSecret = appSecret
+        
+        self.getStreamID = getStreamID
+        
+        newUploaderModel = dataBaseService.addUploader(clusterName, UploaderModel(clusterName, language, datetime.utcnow()))
         self.id = newUploaderModel.id
     
     def runStreaming(self, event : Event) -> None:
-        streamLauncher = StreamLauncher(event)
-        streamAnalyzer = Analyzer(event)
+        streamLauncher = StreamLauncher(event, self.appID, self.appSecret, self.getStreamID)
+        streamAnalyzer = Analyzer(event, self.appID, self.appSecret)
         pool = ThreadPool(processes=1)
         asyncResult = pool.apply_async(streamAnalyzer.launchAnalyzer, ())
         streamLauncher.runStreaming()
@@ -34,13 +39,17 @@ class Uploader:
     def run(self) -> None:
         try:
             while(True):
-                nextEvent = self.dataBaseService.getNextEvent(self.clusterName, self.id, self.language)
-                if(nextEvent is not None):
-                    print(nextEvent)
-                    self.runStreaming(nextEvent)
-                else:
-                    print(f"{datetime.now()} : No event found...")
-                    time.sleep(10)
-        except KeyboardInterrupt:
+                try:
+                    nextEvent = self.dataBaseService.getNextEvent(self.clusterName, self.id, self.language)
+                    if(nextEvent is not None):
+                        print(nextEvent)
+                        self.runStreaming(nextEvent)
+                    else:
+                        print(f"{datetime.utcnow()} : No event found...")
+                        time.sleep(10)
+                except Exception as err:
+                    print(f"{datetime.utcnow()} : {err}")
+        except BaseException:
+            print("Deleting the uploader in the database...")
             self.dataBaseService.deleteUploaderByID(self.clusterName, self.id)
             sys.exit(0)
