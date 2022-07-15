@@ -1,24 +1,30 @@
 from datetime import datetime, timedelta
+from multiprocessing import Queue
 from time import sleep
 from abstraction.IDataBaseService import IDataBaseService
 from models.analyze import Analyze
 from models.event import Event
 from twitchAPI import Twitch
+from models.followEvent import FollowEvent
 from models.statistic import Statistic
 from utils.twitchAPI import getIDOfAChannel, createListOfChatters
 
 class Analyzer:
-    def __init__(self, event : Event, appID : str, appSecret : str) -> None:
+    def __init__(self, event : Event, twitchAPI : Twitch, appID : str, appSecret : str, multiThreadEventQueue : Queue) -> None:
         self.event = event
         self.allStatistics = []
         self.alreadyFollowed = []
         self.alreadyChatting = []
         
+        self.eventMessageIDs = set()
+        
         self.appID = appID
         self.appSecret = appSecret
         
-        self.twitchAPI = Twitch(self.appID, self.appSecret)
+        self.twitchAPI = twitchAPI
         self.idOfChannel = getIDOfAChannel(self.twitchAPI, self.event.twitchUserName)
+        
+        self.multiThreadEventQueue = multiThreadEventQueue
     
     def initAlreadyFollowed(self) -> None:
         """Initialize the list of already followed users."""
@@ -53,8 +59,16 @@ class Analyzer:
         while(datetime.utcnow() < self.event.endTime):
             currentChattersOurChannel = createListOfChatters("adyourchanneldev")
             currentChattersOtherChannel = createListOfChatters(self.event.twitchUserName)
-            currentStistic = Statistic(datetime.utcnow(), currentChattersOurChannel, currentChattersOtherChannel, self.alreadyFollowed, len(currentChattersOtherChannel), len(self.alreadyFollowed), 0)
-            allStats.append(currentStistic)
+            listNewFollowers = []
+            while(not self.multiThreadEventQueue.empty()):
+                headers, event = self.multiThreadEventQueue.get()
+                if(headers["twitch-eventsub-message-id"] not in self.eventMessageIDs):
+                    self.eventMessageIDs.add(headers["twitch-eventsub-message-id"])
+                    if(event["subscription"]["type"] == "channel.follow"):
+                        followEvent = FollowEvent(event["event"])
+                        listNewFollowers.append(followEvent)
+            currentStatistic = Statistic(datetime.utcnow(), currentChattersOurChannel, currentChattersOtherChannel, listNewFollowers, len(currentChattersOtherChannel), len(self.alreadyFollowed), 0)
+            allStats.append(currentStatistic)
             sleep(5)
         print(f"Analyzing the channel {self.event.twitchUserName}... Done")
         return allStats

@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
+
+from matplotlib import collections
 from models.ListUploaders import ListUploaders
 from pymongo import MongoClient
+from models.resultAnalyze import ResultAnalyze
 from models.uploader import UploaderModel
 from models.event import Event
 
@@ -84,4 +87,8 @@ class DataBaseService:
         else:
             return None
             
-                
+    def addResultAnalyze(self, resultAnalyze : ResultAnalyze) -> ResultAnalyze|None:
+        """Add a resultAnalyze."""
+        collection = self.database.get_collection("resultAnalyze")
+        collection.insert_one(resultAnalyze.toDictionary())
+        return resultAnalyze
