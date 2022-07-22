@@ -23,7 +23,7 @@ def initUploader() -> Uploader:
     
     databaseService = DataBaseService(properties["DATABASE_CONNECTION_STRING"], properties["DATABASE_NAME"])
     
-    databaseService.createEvent(Event(None, "rlgym","cluster1", 0, datetime.utcnow(), datetime.utcnow() + timedelta(minutes=2), "fr", "test", ["this", "is", "a", "test"]))
+    databaseService.createEvent(Event(None, "rlgym","cluster1", 0, datetime.utcnow(), datetime.utcnow() + timedelta(minutes=1), "fr", "test", ["this", "is", "a", "test"]))
     
     uploader = Uploader(properties["CLUSTER_NAME"], properties["LANGUAGE"], databaseService, properties["URL_CALL_BACK"], properties["APP_ID"], properties["APP_SECRET"], properties["GET_STREAM_ID"], properties["STREAM_CHANNEL"])
     uploader.run()

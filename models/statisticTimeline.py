@@ -11,10 +11,13 @@ class StatisticTimeline:
         return minDate, maxDate
     
     def __findIndexBetweenMinutes(self, date : datetime) -> int:
-        for i, statistic in self.timeline:
-            if(statistic[0] < date and statistic[1] > date):
+        for i, statistic in enumerate(self.timeline):
+            dateTimestamp = date.timestamp()
+            startStatisticTimestamp = statistic[0].timestamp()
+            endStatisticTimestamp = statistic[1].timestamp()
+            if(startStatisticTimestamp < dateTimestamp and endStatisticTimestamp > dateTimestamp):
                 return i
-            if(statistic[0] > date):
+            elif(startStatisticTimestamp < dateTimestamp):
                 return -1
         return -1
     

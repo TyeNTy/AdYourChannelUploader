@@ -16,8 +16,11 @@ class SubscriptionHandler:
         self.clientID = clientID
         self.portToListen = portToListen
         
+        self.isWebServerLaunched = False
+        
         self.secretSubscriptionOurChannel : str = generateRandomString(100)
         self.followerSubscriptionID = None
+        self.SubscriptionSubscriptionID = None
         
         self.multiThreadEventQueue = multiThreadEventQueue
     
@@ -25,17 +28,36 @@ class SubscriptionHandler:
         if(id is not None):
             deleteSubscriptionByID(self.twitchAPI, id)
     
+    def __launchWebServer(self) -> None:
+        if not self.isWebServerLaunched:
+            self.subscriptionHandler = partial(SubscriptionHandlerEndPoint, self.secretSubscriptionOurChannel, self.multiThreadEventQueue)
+            self.httpServer = HTTPServer(('', self.portToListen), self.subscriptionHandler)
+            self.httpServer.socket = ssl.wrap_socket (self.httpServer.socket, keyfile=f"C:\\Certbot\\live\\{self.myIP}\\privkey.pem" , certfile=f'C:\\Certbot\\live\\{self.myIP}\\fullchain.pem', server_side=True)
+            self.serverThread = Thread(target=self.httpServer.serve_forever)
+            self.serverThread.start()
+            self.isWebServerLaunched = True
+    
     def createFollowerSubscription(self, channelName : str) -> None:
         oauthToken = self.twitchAPI.get_app_token()
         response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, self.clientID, channelName, "channel.follow", f"https://{self.myIP}/followerHandler", oauthToken)
-        self.followerSubscriptionID = response.json()["data"][0]["id"]
-        self.subscriptionHandler = partial(SubscriptionHandlerEndPoint, self.secretSubscriptionOurChannel, self.multiThreadEventQueue)
-        self.httpServer = HTTPServer(('', self.portToListen), self.subscriptionHandler)
-        self.httpServer.socket = ssl.wrap_socket (self.httpServer.socket, keyfile=f"C:\\Certbot\\live\\{self.myIP}\\privkey.pem" , certfile=f'C:\\Certbot\\live\\{self.myIP}\\fullchain.pem', server_side=True)
-        self.serverThread = Thread(target=self.httpServer.serve_forever)
-        self.serverThread.start()
+        if(response.status_code == 202):
+            self.followerSubscriptionID = response.json()["data"][0]["id"]
+            self.__launchWebServer()
+        else:
+            print(f"Error creating follower subscription, status code : {response.status_code}")
+    
+    def createSubscriptionSubscription(self, channelName : str) -> None:
+        oauthToken = self.twitchAPI.get_app_token()
+        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, self.clientID, channelName, "channel.subscribe", f"https://{self.myIP}/subscriptionHandler", oauthToken)
+        if(response.status_code == 202):
+            self.SubscriptionSubscriptionID = response.json()["data"][0]["id"]
+            self.__launchWebServer()
+        else:
+            print(f"Error creating sub subscription, status code : {response.status_code}")
     
     def shutdown(self):
-        self.httpServer.shutdown()
-        self.serverThread.join()
+        if self.isWebServerLaunched:
+            self.httpServer.shutdown()
+            self.serverThread.join()
+            self.isWebServerLaunched = False
         print("Server stopped")

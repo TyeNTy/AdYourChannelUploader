@@ -19,13 +19,14 @@ class AnalyzerProcessor:
         return False
     
     def getViewerWhoOnlyWentToTheOtherChannel(self) -> list[tuple[datetime, str]]:
-        listOlderChatters = []
-        listNewViewers = []
+        listOlderChatters = set([])
+        listNewViewers = set([])
         for statistic in self.data:
-            listOlderChatters.extend(statistic.listOfViewersOurChannel)
+            for viewer in statistic.listOfViewersOurChannel:
+                listOlderChatters.add(viewer)
             for viewer in statistic.listOfViewersOtherChannel:
                 if viewer in listOlderChatters and not self.__testIfViewerInList(viewer, listNewViewers):
-                    listNewViewers.append((statistic.date, viewer))
+                    listNewViewers.add((statistic.date, viewer))
         return listNewViewers
     
     def regroupNewViewersPerMinute(self, listNewViewers : list[tuple[datetime, str]]) -> list[list[datetime, list[str]]]:

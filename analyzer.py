@@ -7,6 +7,7 @@ from models.event import Event
 from twitchAPI import Twitch
 from models.followEvent import FollowEvent
 from models.statistic import Statistic
+from models.subscribeEvent import SubscribeEvent
 from utils.twitchAPI import getIDOfAChannel, createListOfChatters
 
 class Analyzer:
@@ -60,6 +61,7 @@ class Analyzer:
             currentChattersOurChannel = createListOfChatters("adyourchanneldev")
             currentChattersOtherChannel = createListOfChatters(self.event.twitchUserName)
             listNewFollowers = []
+            listNewSubscribers = []
             while(not self.multiThreadEventQueue.empty()):
                 headers, event = self.multiThreadEventQueue.get()
                 if(headers["twitch-eventsub-message-id"] not in self.eventMessageIDs):
@@ -67,7 +69,10 @@ class Analyzer:
                     if(event["subscription"]["type"] == "channel.follow"):
                         followEvent = FollowEvent(event["event"])
                         listNewFollowers.append(followEvent)
-            currentStatistic = Statistic(datetime.utcnow(), currentChattersOurChannel, currentChattersOtherChannel, listNewFollowers, len(currentChattersOtherChannel), len(self.alreadyFollowed), 0)
+                    elif(event["subscription"]["type"] == "channel.subscribe"):
+                        subscribeEvent = SubscribeEvent(event["event"])
+                        listNewSubscribers.append(subscribeEvent)
+            currentStatistic = Statistic(datetime.utcnow(), currentChattersOurChannel, currentChattersOtherChannel, listNewFollowers, listNewSubscribers, len(self.alreadyFollowed), 0)
             allStats.append(currentStatistic)
             sleep(5)
         print(f"Analyzing the channel {self.event.twitchUserName}... Done")

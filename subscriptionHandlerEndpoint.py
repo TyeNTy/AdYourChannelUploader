@@ -22,7 +22,7 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.end_headers()
                     self.wfile.write(bytes(challenge, "utf-8"))
-                    print("Creation of follower subscription successful")
+                    print(f"Creation of {bodyDict['subscription']['type']} subscription successful")
                 return
             elif(self.headers["twitch-eventsub-message-type"] == "notification"):
                 self.multiThreadEventQueue.put((self.headers, bodyDict))

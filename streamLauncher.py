@@ -6,10 +6,12 @@ from models.event import Event
 import pylivestream.api as pls
 from threading import Timer
 from twitchAPI import Twitch
-from utils.twitchAPI import changeChannelInformation
+from utils.twitchAPI import changeChannelInformation, getIDOfAChannel
+from models.videoEncoding import Encoding, VideoEncoding, Resolution
+import ffmpeg
 
 class StreamLauncher:
-    knownTwitchEncoding = ["1080p60", "1080p30", "720p60", "720p30", "480p60", "480p30", "high", "best"]
+    knownTwitchEncoding : list[Encoding] = Resolution.values()
     pathToTmpVideoPipe = "tmp"
     tmpVideoPipeName = "tmpVideoPipe"
     
@@ -21,14 +23,11 @@ class StreamLauncher:
         self.getStreamID = getStreamID
         self.twitchAPI = twitchAPI
         self.streamChannel = streamChannel
-    
-    def launchListeningPipe(self):
-        while(datetime.utcnow() + timedelta(seconds=10) < self.event.endTime):
-            try:
-                pls.stream_file("pylivestream.ini", websites=["twitch"], video_file=self.fullPathVideoPipe, loop=False, assume_yes=True)
-            except KeyError:
-                print("End of stream :")
-                print(self.event)
+        
+        self.twitchIniFile = "twitch.ini"
+        self.streamingServer = "rtmp://cdg10.contribute.live-video.net/app/"
+        
+        self.streamKey = self.twitchAPI.get_stream_key(getIDOfAChannel(self.twitchAPI, self.streamChannel))["data"][0]["stream_key"]
 
     def resetChannelInformation(self):
         changeChannelInformation(self.twitchAPI, self.streamChannel, f"!{self.streamChannel}", self.event.language)
@@ -61,7 +60,7 @@ class StreamLauncher:
         if not streams:
             print("No streams found on URL '{0}'".format(url))
 
-        maxQuality = ""
+        maxQuality = None
         for quality in self.knownTwitchEncoding:
             if quality in streams:
                 maxQuality = quality
@@ -70,16 +69,10 @@ class StreamLauncher:
         # Look for specified stream
         if maxQuality not in streams:
             print("Unable to find '{0}' stream on URL '{1}'".format(maxQuality, url))
-        print(streams)
-        print(f"Starting to write to pipe with quality : {maxQuality}")
-
-        if(not os.path.exists(self.pathToTmpVideoPipe)):
-            os.makedirs(self.pathToTmpVideoPipe)
-        video_pipe = open(self.fullPathVideoPipe, 'w+b', 0)
-        
+        for key, value in streams.items():
+            print(f"{key} : \n\t{value}")
+        print(f"Starting to stream with quality : {maxQuality}")
         self.initChannelInformation()
-        
-        timer = Timer(1, self.launchListeningPipe)
         
         stream = streams[maxQuality]
         for _ in range(10):
@@ -87,13 +80,18 @@ class StreamLauncher:
                 fd = stream.open()
             except BaseException as err:
                 print(err)
-        timer.start()
+        
+        process = (
+            ffmpeg.input("pipe:")
+            .output(f"{self.streamingServer}{self.streamKey}", vcodec="copy", acodec="copy", f="flv")
+            .run_async(pipe_stdin=True)
+        )
         
         while(datetime.utcnow() < self.event.endTime):
-            data = fd.read(1024)
-            video_pipe.write(data)
-        video_pipe.close()
+            process.stdin.write(fd.read(2**16))
+        process.stdin.close()
         fd.close()
         
         self.resetChannelInformation()
+
         

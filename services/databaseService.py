@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from matplotlib import collections
 from models.ListUploaders import ListUploaders
 from pymongo import MongoClient
+from models.uploaderStatus import UploaderStatus
 from models.resultAnalyze import ResultAnalyze
 from models.uploader import UploaderModel
 from models.event import Event
@@ -57,6 +58,7 @@ class DataBaseService:
     
     def addUploader(self, clusterName : str, uploaderModel : UploaderModel) -> UploaderModel:
         """Register a new uploader."""
+        uploaderModel.status = UploaderStatus.INIT
         document = self.uploadersCollection.find_one({"clusterName" : clusterName})
         if(document is not None):
             listUploaders = document["listUploaders"]
@@ -73,6 +75,20 @@ class DataBaseService:
             listUploaders = ListUploaders([uploaderModel])
             self.uploadersCollection.insert_one({"clusterName":clusterName, "listUploaders" : ListUploaders.toListOfDictionary(listUploaders)})
             return uploaderModel
+    
+    def updateStatusUploader(self, clusterName : str, uploaderID : int, status : UploaderStatus) -> UploaderModel|None:
+        """Update the status of an uploader."""
+        document = self.uploadersCollection.find_one({"clusterName" : clusterName})
+        if(document is not None):
+            listUploaders = document["listUploaders"]
+            listUploaders = ListUploaders.loadFromListOfDictionary(clusterName, listUploaders)
+            elementToUpdate = next(filter(lambda uploader : uploader.id == uploaderID, listUploaders.listUploaders))
+            elementToUpdate.status = status
+            elementToUpdate.lastHealthCheck = datetime.utcnow()
+            self.uploadersCollection.update_one({"clusterName" : clusterName}, {"$set" : {"listUploaders":ListUploaders.toListOfDictionary(listUploaders)}}, upsert=True)
+            return elementToUpdate
+        else:
+            return None
     
     def deleteUploaderByID(self, clusterName : str, id : int) -> UploaderModel|None:
         """Delete an uploader."""

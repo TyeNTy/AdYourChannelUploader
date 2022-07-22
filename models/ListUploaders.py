@@ -21,6 +21,7 @@ class ListUploaders:
             dictionary["id"] = uploadModel.id
             dictionary["language"] = uploadModel.language
             dictionary["lastHealthCheck"] = uploadModel.lastHealthCheck
+            dictionary["status"] = uploadModel.status.value
             listDictionary.append(dictionary)
         return listDictionary
         

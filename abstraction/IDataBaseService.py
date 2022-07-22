@@ -1,5 +1,6 @@
 import abc
 from models.ListUploaders import ListUploaders
+from models.uploaderStatus import UploaderStatus
 from models.resultAnalyze import ResultAnalyze
 from models.uploader import UploaderModel
 from models.event import Event
@@ -21,7 +22,9 @@ class IDataBaseService(metaclass=abc.ABCMeta):
                 hasattr(subclass, 'addUploader') and 
                 callable(subclass.addUploader) and
                 hasattr(subclass, 'addResultAnalyze') and 
-                callable(subclass.addResultAnalyze))
+                callable(subclass.addResultAnalyze) and
+                hasattr(subclass, 'updateStatusUploader') and 
+                callable(subclass.updateStatusUploader))
     
     @abc.abstractmethod
     def getEvent(self, event : Event) -> Event:
@@ -61,4 +64,9 @@ class IDataBaseService(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def addResultAnalyze(self, resultAnalyze : ResultAnalyze) -> ResultAnalyze|None:
         """Add a resultAnalyze."""
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def updateStatusUploader(self, clusterName : str, uploaderID : int, status : UploaderStatus) -> UploaderModel|None:
+        """Update the status of an uploader."""
         raise NotImplementedError
