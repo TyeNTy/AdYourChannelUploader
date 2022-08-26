@@ -50,7 +50,7 @@ class Analyzer:
     def initAlreadyChatting(self) -> None:
         """Initialize the list of already chatting users."""
         self.alreadyChatting = createListOfChatters(self.event.twitchUserName)
-    
+        
     def launchAnalyzer(self) -> list[Statistic]:
         """Get the number of viewers of a streamer, the number of followers, the number of subscribers every 5s."""
         # self.initAlreadyFollowed()

@@ -45,10 +45,12 @@ class Uploader:
     
         self.multiThreadChangeHostQueue : Queue = None
         self.multiThreadEventQueue : Queue = None
+        
+        self.analyzerThreads : list[Thread] = []
     
     def __createSubscriptions(self, event : Event) -> None:
         self.multiThreadEventQueue = Queue()
-        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.appID, self.myIP, 443, self.multiThreadEventQueue)
+        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.appID, self.myIP, 443, self.multiThreadEventQueue, event)
         self.subscriptionHandler.createFollowerSubscription(event.twitchUserName)
         self.subscriptionHandler.createSubscriptionSubscription(event.twitchUserName)
     
@@ -69,6 +71,9 @@ class Uploader:
         
     def runStreaming(self, event : Event) -> None:
         
+        self.twitchAPI.__user_auth_refresh_token = event.refreshToken
+        self.twitchAPI.refresh_used_token()
+        
         self.__createSubscriptions(event)
         
         streamLauncher = StreamLauncher(event, self.twitchAPI, self.appID, self.appSecret, self.getStreamID, self.streamChannel)
@@ -79,8 +84,8 @@ class Uploader:
         streamLauncher.runStreaming()
         allStatistics = asyncResult.get()
         analyzerProcessor = AnalyzerProcessor(event, allStatistics, self.dataBaseService)
-        result = analyzerProcessor.launchAnalyze()
-        print(result)
+        self.analyzerThreads.append(Thread(target=analyzerProcessor.launchAnalyze, args=()))
+        self.analyzerThreads[-1].start()
         self.__deleteSubscriptions()
         
     
@@ -110,11 +115,14 @@ class Uploader:
             if(isStreaming):
                 print("Deleting the subscriptions...")
                 self.__deleteSubscriptions()
+                print("Stopping webserver...")
+                self.subscriptionHandler.shutdown()
             print("Closing the chat bot...")
             # self.chatBotThreadPool.terminate()
             # self.chatBotThreadPool.join()
+            print("Waiting the analyzer threads...")
+            for thread in self.analyzerThreads:
+                thread.join()
             print("Deleting the uploader in the database...")
             self.dataBaseService.deleteUploaderByID(self.clusterName, self.id)
-            print("Stopping webserver...")
-            self.subscriptionHandler.shutdown()
             sys.exit(0)

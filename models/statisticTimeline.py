@@ -1,9 +1,13 @@
 from datetime import datetime, timedelta
+from tracemalloc import Statistic
+from typing import Dict
+
+from models.timeEvents import TimeEvents
 
 
 class StatisticTimeline:
     def __init__(self) -> None:
-        self.timeline = []
+        self.timeline : list[TimeEvents] = []
     
     def __getMinAndMaxDatetimeInMinutes(self, date : datetime) -> tuple[datetime, datetime]:
         minDate = datetime(date.year, date.month, date.day, date.hour, date.minute)
@@ -11,10 +15,10 @@ class StatisticTimeline:
         return minDate, maxDate
     
     def __findIndexBetweenMinutes(self, date : datetime) -> int:
-        for i, statistic in enumerate(self.timeline):
+        for i, timeEvent in enumerate(self.timeline):
             dateTimestamp = date.timestamp()
-            startStatisticTimestamp = statistic[0].timestamp()
-            endStatisticTimestamp = statistic[1].timestamp()
+            startStatisticTimestamp = timeEvent.startTime.timestamp()
+            endStatisticTimestamp = timeEvent.endTime.timestamp()
             if(startStatisticTimestamp < dateTimestamp and endStatisticTimestamp > dateTimestamp):
                 return i
             elif(startStatisticTimestamp < dateTimestamp):
@@ -22,61 +26,62 @@ class StatisticTimeline:
         return -1
     
     def __sortTimelinePerMinute(self):
-        self.timeline.sort(key=lambda x: x[0])
+        self.timeline.sort(key=lambda x: x.startTime)
     
     def addNewViewer(self, date : datetime, viewer : str) -> None:
         index = self.__findIndexBetweenMinutes(date)
         if index == -1:
             minDate, maxDate = self.__getMinAndMaxDatetimeInMinutes(date)
-            self.timeline.append((minDate, maxDate, [viewer], [], [], [], []))
+            self.timeline.append(TimeEvents(minDate, maxDate, [viewer], [], [], [], []))
             self.__sortTimelinePerMinute()
         else:
-            self.timeline[index][2].append(viewer)
+            self.timeline[index].newViewers.append(viewer)
     
     def addNewFollow(self, date : datetime, follower : str) -> None:
         index = self.__findIndexBetweenMinutes(date)
         if index == -1:
             minDate, maxDate = self.__getMinAndMaxDatetimeInMinutes(date)
-            self.timeline.append((minDate, maxDate, [], [follower], [], [], []))
+            self.timeline.append(TimeEvents(minDate, maxDate, [], [follower], [], [], []))
             self.__sortTimelinePerMinute()
         else:
-            self.timeline[index][3].append(follower)
+            self.timeline[index].newFollowers.append(follower)
     
     def addNewSubTier1(self, date : datetime, subTier1 : str) -> None:
         index = self.__findIndexBetweenMinutes(date)
         if index == -1:
             minDate, maxDate = self.__getMinAndMaxDatetimeInMinutes(date)
-            self.timeline.append((minDate, maxDate, [], [], [subTier1], [], []))
+            self.timeline.append(TimeEvents(minDate, maxDate, [], [], [subTier1], [], []))
             self.__sortTimelinePerMinute()
         else:
-            self.timeline[index][4].append(subTier1)
+            self.timeline[index].newSubTier1.append(subTier1)
     
-    def addNewSubTier1(self, date : datetime, subTier2 : str) -> None:
+    def addNewSubTier2(self, date : datetime, subTier2 : str) -> None:
         index = self.__findIndexBetweenMinutes(date)
         if index == -1:
             minDate, maxDate = self.__getMinAndMaxDatetimeInMinutes(date)
-            self.timeline.append((minDate, maxDate, [], [], [subTier2], [], []))
+            self.timeline.append(TimeEvents(minDate, maxDate, [], [], [subTier2], [], []))
             self.__sortTimelinePerMinute()
         else:
-            self.timeline[index][4].append(subTier2)
+            self.timeline[index].newSubTier2.append(subTier2)
     
-    def addNewSubTier1(self, date : datetime, subTier3 : str) -> None:
+    def addNewSubTier3(self, date : datetime, subTier3 : str) -> None:
         index = self.__findIndexBetweenMinutes(date)
         if index == -1:
             minDate, maxDate = self.__getMinAndMaxDatetimeInMinutes(date)
-            self.timeline.append((minDate, maxDate, [], [], [subTier3], [], []))
+            self.timeline.append(TimeEvents(minDate, maxDate, [], [], [subTier3], [], []))
             self.__sortTimelinePerMinute()
         else:
-            self.timeline[index][4].append(subTier3)
+            self.timeline[index].newSubTier3.append(subTier3)
     
-    def toDictionary(self):
+    def toDictionary(self) -> Dict:
         return {
-            "timeline": self.timeline
+            "timeline": [timeEvent.toDictionary() for timeEvent in self.timeline]
         }
     
     def __str__(self) -> str:
         txt = ""
-        for minDate, maxDate, newViewers, newFollowers, subTier1, subTier2, subTier3 in self.timeline:
+        for timeEvent in self.timeline:
+            minDate, maxDate, newViewers, newFollowers, subTier1, subTier2, subTier3 = timeEvent.startTime, timeEvent.endTime, timeEvent.newViewers, timeEvent.newFollowers, timeEvent.newSubTier1, timeEvent.newSubTier2, timeEvent.newSubTier3
             txt += f"{minDate} - {maxDate}\n"
             txt += "\tNew viewers :\n"
             for newViewer in newViewers:

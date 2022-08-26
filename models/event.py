@@ -5,6 +5,7 @@ from models.entity import Entity
 class Event(Entity):
     def __init__(self, id : str,
                  twitchUserName : str,
+                 refreshToken : str,
                  clusterName : str,
                  uploaderID : int,
                  startTime : datetime,
@@ -14,6 +15,7 @@ class Event(Entity):
                  tags = []):
         Entity.__init__(self, id)
         self.twitchUserName : str = twitchUserName
+        self.refreshToken : str = refreshToken
         self.clusterName : str = clusterName
         self.uploaderID : int = uploaderID
         self.startTime : datetime = startTime
@@ -26,6 +28,7 @@ class Event(Entity):
     def loadFromDictionary(dictionary : dict) -> Event:
         return Event(dictionary["_id"],
                      dictionary["twitchUserName"],
+                     dictionary["refreshToken"],
                      dictionary["clusterName"],
                      dictionary["uploaderID"],
                      dictionary["startTime"],

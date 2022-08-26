@@ -2,6 +2,7 @@ from functools import partial
 from http.server import *
 from multiprocessing import Queue
 import ssl
+from models.event import Event
 from subscriptionHandlerEndpoint import SubscriptionHandlerEndPoint
 from utils.twitchAPI import createNewSubscription, deleteSubscriptionByID, generateRandomString
 from twitchAPI import Twitch
@@ -9,7 +10,7 @@ from threading import Thread
 
 class SubscriptionHandler:
     
-    def __init__(self, twitchAPI : Twitch, clientID : str, myIP : str, portToListen : int, multiThreadEventQueue : Queue) -> None:
+    def __init__(self, twitchAPI : Twitch, clientID : str, myIP : str, portToListen : int, multiThreadEventQueue : Queue, event : Event) -> None:
         
         self.myIP = myIP
         self.twitchAPI = twitchAPI
@@ -21,6 +22,8 @@ class SubscriptionHandler:
         self.secretSubscriptionOurChannel : str = generateRandomString(100)
         self.followerSubscriptionID = None
         self.SubscriptionSubscriptionID = None
+        
+        self.event = event
         
         self.multiThreadEventQueue = multiThreadEventQueue
     
@@ -38,8 +41,7 @@ class SubscriptionHandler:
             self.isWebServerLaunched = True
     
     def createFollowerSubscription(self, channelName : str) -> None:
-        oauthToken = self.twitchAPI.get_app_token()
-        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, self.clientID, channelName, "channel.follow", f"https://{self.myIP}/followerHandler", oauthToken)
+        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, self.clientID, channelName, "channel.follow", f"https://{self.myIP}/followerHandler", self.event.accessToken)
         if(response.status_code == 202):
             self.followerSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()

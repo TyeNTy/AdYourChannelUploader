@@ -11,10 +11,10 @@ class ResultAnalyze:
         self.eventID = eventID
         self.statisticTimeline = statisticTimeline
     
-    def toDictionary(self):
+    def toDictionary(self) -> dict:
         return {
             "eventID": self.eventID,
-            "timeline": self.statisticTimeline.toDictionary()
+            "statisticTimeline": self.statisticTimeline.toDictionary()
         }
     
     def __str__(self) -> str:

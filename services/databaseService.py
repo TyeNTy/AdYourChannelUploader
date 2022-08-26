@@ -11,9 +11,9 @@ from models.event import Event
 class DataBaseService:
     
     def __init__(self, mongoDBConnectionString : str, dataBaseName : str):
-        self.client = MongoClient(mongoDBConnectionString)
+        self.client = MongoClient(host=mongoDBConnectionString)
         self.database = self.client[dataBaseName]
-        self.uploadersCollection = self.database.get_collection("uploaders")
+        self.uploadersCollection = self.database.get_collection("clusters")
     
     def getEvent(self, event : Event) -> Event:
         """Try to get the event."""

@@ -83,7 +83,7 @@ class StreamLauncher:
         
         process = (
             ffmpeg.input("pipe:")
-            .output(f"{self.streamingServer}{self.streamKey}", vcodec="copy", acodec="copy", f="flv")
+            .output(f"{self.streamingServer}{self.streamKey}", vcodec="copy", acodec="copy", f="flv", loglevel="quiet")
             .run_async(pipe_stdin=True)
         )
         
