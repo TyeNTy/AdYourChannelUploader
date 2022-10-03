@@ -46,7 +46,7 @@ class StreamLauncher:
         streamLink.set_option("http-headers", f"Client-Id={self.getStreamID}")
         
         # Attempt to fetch streams
-        for _ in range(10):
+        while(datetime.utcnow() < self.event.endTime):
             try:
                 streams = streamLink.streams(url)
                 break
@@ -69,17 +69,17 @@ class StreamLauncher:
         # Look for specified stream
         if maxQuality not in streams:
             print("Unable to find '{0}' stream on URL '{1}'".format(maxQuality, url))
-        for key, value in streams.items():
-            print(f"{key} : \n\t{value}")
         print(f"Starting to stream with quality : {maxQuality}")
         self.initChannelInformation()
         
         stream = streams[maxQuality]
-        for _ in range(10):
+        while(datetime.utcnow() < self.event.endTime):
             try:
                 fd = stream.open()
+                break
             except BaseException as err:
                 print(err)
+                time.sleep(2)
         
         process = (
             ffmpeg.input("pipe:")

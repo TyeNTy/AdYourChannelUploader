@@ -41,7 +41,7 @@ class SubscriptionHandler:
             self.isWebServerLaunched = True
     
     def createFollowerSubscription(self, channelName : str) -> None:
-        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, self.clientID, channelName, "channel.follow", f"https://{self.myIP}/followerHandler", self.event.accessToken)
+        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, self.clientID, channelName, "channel.follow", f"https://{self.myIP}/followerHandler", self.twitchAPI.get_app_token())
         if(response.status_code == 202):
             self.followerSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()
