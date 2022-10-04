@@ -65,7 +65,7 @@ class Uploader:
         auth = UserAuthenticator(twitchAPIChat, scopes, force_verify=False, url='http://localhost:17563')
         token, refresh_token = auth.authenticate()
         self.multiThreadChangeHostQueue = Queue()
-        self.chatBot = ChatBot(self.streamChannel, token, self.multiThreadChangeHostQueue)
+        self.chatBot = ChatBot(self.streamChannel, token, self.multiThreadChangeHostQueue, self.language)
         self.chatBotThreadPool = ThreadPool(processes=1)
         self.chatBotThreadPool.apply_async(self.chatBot.run, ())
         
