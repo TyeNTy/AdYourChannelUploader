@@ -47,11 +47,12 @@ class AnalyzerProcessor:
         return newFollowers
     
     def __createTimeline(self, listNewViewers : list[tuple[datetime, str]], listNewFollowers : list[FollowEvent]) -> StatisticTimeline:
-        timeline = StatisticTimeline()
-        for date, newViewer in listNewViewers:
-            timeline.addNewViewer(date, newViewer)
+        
+        timeline = StatisticTimeline(self.event.startTime, self.event.endTime)
+        for date, _ in listNewViewers:
+            timeline.addNewViewer(date)
         for newFollower in listNewFollowers:
-            timeline.addNewFollow(newFollower.followedAT, newFollower.userName)
+            timeline.addNewFollow(newFollower.followedAT)
         return timeline
     
     def launchAnalyze(self) -> ResultAnalyze:

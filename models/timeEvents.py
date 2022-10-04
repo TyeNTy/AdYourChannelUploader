@@ -2,7 +2,7 @@ from datetime import datetime
 
 
 class TimeEvents:
-    def __init__(self, startDate : datetime, endDate : datetime, newviewers : list[str], newFollowers : list[str], newSubscribersTier1 : list[str], newSubscribersTier2 : list[str], newSubscribersTier3 : list[str]):
+    def __init__(self, startDate : datetime, endDate : datetime, newviewers : int, newFollowers : int, newSubscribersTier1 : int, newSubscribersTier2 : int, newSubscribersTier3 : int):
         self.startTime = startDate
         self.endTime = endDate
         self.newViewers = newviewers
