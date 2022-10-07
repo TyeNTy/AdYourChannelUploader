@@ -10,7 +10,16 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": ["mongodb://localhost:27017/",
+                "AdYourChannelDev",
+                "cluster1",
+                "jzkbprff40iqj646a697cyrvl0zt2m6",
+                "dev1.adyourchannel.com",
+                "udciak7gm0oldx66jma1azzu4dsgnm",
+                "6di7akw2ad7u4aysaylfup6uf8ckyf",
+                "adyourchanneldev",
+                "fr"]
         }
     ]
 }
