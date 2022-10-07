@@ -43,7 +43,7 @@ def initUploader() -> Uploader:
     
     # generateRandomEvents(databaseService)
     
-    databaseService.createEvent(Event(None, "rlgym", "alagnyglrrs8y9v3uj24dife3646xvijo5zhxvtiobhn61hrgs", "cluster1", 0, datetime.utcnow(), datetime.utcnow() + timedelta(minutes=4), "fr", "test", ["this", "is", "a", "test"]))
+    # databaseService.createEvent(Event(None, "rlgym", "alagnyglrrs8y9v3uj24dife3646xvijo5zhxvtiobhn61hrgs", "cluster1", 0, datetime.utcnow(), datetime.utcnow() + timedelta(minutes=4), "fr", "test", ["this", "is", "a", "test"]))
     # databaseService.createEvent(Event(None, "rlgym", "test", "cluster1", 0, datetime.utcnow() + timedelta(minutes=5), datetime.utcnow() + timedelta(minutes=9), "fr", "test", ["this", "is", "a", "test"]))
     
     uploader = Uploader(properties["CLUSTER_NAME"], properties["LANGUAGE"], databaseService, properties["URL_CALL_BACK"], properties["APP_ID"], properties["APP_SECRET"], properties["GET_STREAM_ID"], properties["STREAM_CHANNEL"])
