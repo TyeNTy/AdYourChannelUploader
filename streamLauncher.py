@@ -3,8 +3,6 @@ import os
 import time
 from streamlink import Streamlink, NoPluginError, PluginError
 from models.event import Event
-import pylivestream.api as pls
-from threading import Timer
 from twitchAPI import Twitch
 from utils.twitchAPI import changeChannelInformation, getIDOfAChannel
 from models.videoEncoding import Encoding, VideoEncoding, Resolution

@@ -16,3 +16,5 @@ __pycache__
 /tmp/*
 */test.py
 test.py
+startup.cfg
+startupChat.cfg

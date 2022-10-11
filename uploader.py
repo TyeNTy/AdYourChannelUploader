@@ -1,5 +1,6 @@
 from datetime import datetime
 from multiprocessing import Queue
+import os
 import sys
 from threading import Thread
 import time
@@ -19,6 +20,9 @@ from utils.twitchAPI import listAllEventSub
 
 class Uploader:
     def __init__(self, clusterName : str, language : str, dataBaseService : IDataBaseService, myIP : str, appID : str, appSecret : str, getStreamID : str, streamChannel : str) -> None:
+        self.startupFileName = "startup.cfg"
+        self.startupChatFileName = "startupChat.cfg"
+        
         self.dataBaseService = dataBaseService
         self.language = language
         self.clusterName = clusterName
@@ -32,12 +36,12 @@ class Uploader:
         self.getStreamID = getStreamID
         
         self.twitchAPI = Twitch(self.appID, self.appSecret)
+        self.twitchAPI.auto_refresh_auth = True
         
         target_scope = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
         auth = UserAuthenticator(self.twitchAPI, target_scope, force_verify=False, url='http://localhost:17563')
         # this will open your default browser and prompt you with the twitch verification website
-        token, refresh_token = auth.authenticate()
-        # add User authentication
+        token, refresh_token = self._loadStartup(self.startupFileName, auth)
         self.twitchAPI.set_user_authentication(token, target_scope, refresh_token)
         
         newUploaderModel = dataBaseService.addUploader(clusterName, UploaderModel(clusterName, language, datetime.utcnow()))
@@ -47,6 +51,19 @@ class Uploader:
         self.multiThreadEventQueue : Queue = None
         
         self.analyzerThreads : list[Thread] = []
+    
+    def _loadStartup(self, fileName : str, auth : UserAuthenticator) -> tuple[str, str]:
+        if(os.path.exists(fileName)):
+            with open(fileName, "r") as f:
+                lines = f.readlines()
+            token = lines[0].replace("\n", "")
+            refresh_token = lines[1].replace("\n", "")
+        else:
+            token, refresh_token = auth.authenticate()
+            with open(fileName, "w") as f:
+                f.write(token + "\n")
+                f.write(refresh_token + "\n")
+        return token, refresh_token
     
     def __createSubscriptions(self, event : Event) -> None:
         self.multiThreadEventQueue = Queue()
@@ -62,8 +79,10 @@ class Uploader:
     def __initChatBot(self) -> None:
         scopes = [AuthScope.CHAT_EDIT, AuthScope.CHAT_READ, AuthScope.CHANNEL_MANAGE_BROADCAST]
         twitchAPIChat = Twitch(self.appID, self.appSecret)
+        twitchAPIChat.auto_refresh_auth = True
         auth = UserAuthenticator(twitchAPIChat, scopes, force_verify=False, url='http://localhost:17563')
-        token, refresh_token = auth.authenticate()
+        token, refresh_token = self._loadStartup(self.startupChatFileName, auth)
+        self.twitchAPI.set_user_authentication(token, scopes, refresh_token)
         self.multiThreadChangeHostQueue = Queue()
         self.chatBot = ChatBot(self.streamChannel, token, self.multiThreadChangeHostQueue, self.language)
         self.chatBotThreadPool = ThreadPool(processes=1)
