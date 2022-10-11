@@ -34,7 +34,7 @@ class Uploader:
         self.twitchAPI = Twitch(self.appID, self.appSecret)
         
         target_scope = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
-        auth = UserAuthenticator(self.twitchAPI, target_scope, force_verify=False, url='http://localhost:17563')
+        auth = UserAuthenticator(self.twitchAPI, target_scope, force_verify=False, url='https://localhost:17563')
         # this will open your default browser and prompt you with the twitch verification website
         token, refresh_token = auth.authenticate()
         # add User authentication
