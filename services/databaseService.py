@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 
-from matplotlib import collections
 from models.ListUploaders import ListUploaders
 from pymongo import MongoClient
 from models.uploaderStatus import UploaderStatus
