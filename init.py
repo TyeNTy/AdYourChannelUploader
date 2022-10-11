@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
-from random import randint, random
+from random import randint
 from models.event import Event
-from models.uploader import UploaderModel
 from uploader import Uploader
 from services.databaseService import DataBaseService
 

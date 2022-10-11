@@ -15,7 +15,7 @@ from multiprocessing.pool import ThreadPool
 from twitchAPI import Twitch, AuthScope, UserAuthenticator
 from subscriptionHandler import SubscriptionHandler
 
-from utils.twitchAPI import createNewSubscription, listAllEventSub
+from utils.twitchAPI import listAllEventSub
 
 class Uploader:
     def __init__(self, clusterName : str, language : str, dataBaseService : IDataBaseService, myIP : str, appID : str, appSecret : str, getStreamID : str, streamChannel : str) -> None:
