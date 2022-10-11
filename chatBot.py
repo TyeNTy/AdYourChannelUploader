@@ -3,13 +3,15 @@ from twitchio.ext import commands, routines
 from multiprocessing import Queue
 from models.event import Event
 from utils.translationHelpers import loadTranslations
+from twitchAPI import Twitch
 
 
 
 class ChatBot(commands.Bot):
 
-    def __init__(self, channelName : str, oauthToken : str, newHostQueue : Queue, language : str):
-        super().__init__(token=oauthToken, prefix='!', initial_channels=[channelName])
+    def __init__(self, channelName : str, twitchAPI : Twitch, newHostQueue : Queue, language : str):
+        super().__init__(token=twitchAPI.get_user_auth_token(), prefix='!', initial_channels=[channelName])
+        self.twitchAPI = twitchAPI
         self.newHostQueue = newHostQueue
         self.channelName = channelName
         self.language = language

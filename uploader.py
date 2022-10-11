@@ -82,9 +82,9 @@ class Uploader:
         twitchAPIChat.auto_refresh_auth = True
         auth = UserAuthenticator(twitchAPIChat, scopes, force_verify=False, url='http://localhost:17563')
         token, refresh_token = self._loadStartup(self.startupChatFileName, auth)
-        self.twitchAPI.set_user_authentication(token, scopes, refresh_token)
+        twitchAPIChat.set_user_authentication(token, scopes, refresh_token)
         self.multiThreadChangeHostQueue = Queue()
-        self.chatBot = ChatBot(self.streamChannel, token, self.multiThreadChangeHostQueue, self.language)
+        self.chatBot = ChatBot(self.streamChannel, twitchAPIChat, self.multiThreadChangeHostQueue, self.language)
         self.chatBotThreadPool = ThreadPool(processes=1)
         self.chatBotThreadPool.apply_async(self.chatBot.run, ())
         
