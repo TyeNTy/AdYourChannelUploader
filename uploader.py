@@ -110,9 +110,10 @@ class Uploader:
     
     def run(self) -> None:
         isStreaming = False
+        exitInstruction = False
         self.__initChatBot()
         try:
-            while(True):
+            while(not exitInstruction):
                 try:
                     nextEvent = self.dataBaseService.getNextEvent(self.clusterName, self.id, self.language)
                     if(nextEvent is not None):
@@ -127,6 +128,9 @@ class Uploader:
                         self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.IDLE)
                         print(f"{datetime.utcnow()} : No event found...")
                         time.sleep(10)
+                    for line in sys.stdin:
+                        if 'exit' == line.rstrip():
+                            exitInstruction = True
                 except Exception as err:
                     print(f"{datetime.utcnow()} : {err}")
         finally:
