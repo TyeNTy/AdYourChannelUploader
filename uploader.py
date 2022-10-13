@@ -51,8 +51,16 @@ class Uploader:
     
         self.multiThreadChangeHostQueue : Queue = None
         self.multiThreadEventQueue : Queue = None
+        self.exitInstruction = False
         
+        self.stdinThread = Thread()
         self.analyzerThreads : list[Thread] = []
+        
+    def _stdinMainThread(self):
+        for line in sys.stdin:
+            if line.rsplit() == "exit":
+                self.exitInstruction = True
+                break
         
     def _saveTokensFromTwitchAPI(self, fileName : str, twitchAPI : Twitch):
         token = twitchAPI.get_user_auth_token()
@@ -122,10 +130,9 @@ class Uploader:
     
     def run(self) -> None:
         isStreaming = False
-        exitInstruction = False
         self.__initChatBot()
         try:
-            while(not exitInstruction):
+            while(not self.exitInstruction):
                 try:
                     nextEvent = self.dataBaseService.getNextEvent(self.clusterName, self.id, self.language)
                     if(nextEvent is not None):
