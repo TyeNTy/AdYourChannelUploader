@@ -53,7 +53,8 @@ class Uploader:
         self.multiThreadEventQueue : Queue = None
         self.exitInstruction = False
         
-        self.stdinThread = Thread()
+        self.stdinThread = Thread(target=self._stdinMainThread)
+        self.stdinThread.start()
         self.analyzerThreads : list[Thread] = []
         
     def _stdinMainThread(self):
