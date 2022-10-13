@@ -43,6 +43,8 @@ class Uploader:
         # this will open your default browser and prompt you with the twitch verification website
         token, refresh_token = self._loadStartup(self.startupFileName, auth)
         self.twitchAPI.set_user_authentication(token, target_scope, refresh_token)
+        self.twitchAPI.refresh_used_token()
+        self._saveTokensFromTwitchAPI(self.startupFileName, self.twitchAPI)
         
         newUploaderModel = dataBaseService.addUploader(clusterName, UploaderModel(clusterName, language, datetime.utcnow()))
         self.id = newUploaderModel.id
@@ -51,6 +53,16 @@ class Uploader:
         self.multiThreadEventQueue : Queue = None
         
         self.analyzerThreads : list[Thread] = []
+        
+    def _saveTokensFromTwitchAPI(self, fileName : str, twitchAPI : Twitch):
+        token = twitchAPI.get_user_auth_token()
+        refresh_token = twitchAPI._Twitch__user_auth_refresh_token
+        self._saveTokens(fileName, token, refresh_token)
+        
+    def _saveTokens(self, fileName : str, token : str, refresh_token : str) -> None:
+        with open(fileName, "w") as f:
+            f.write(token + "\n")
+            f.write(refresh_token + "\n")
     
     def _loadStartup(self, fileName : str, auth : UserAuthenticator) -> tuple[str, str]:
         if(os.path.exists(fileName)):
@@ -60,9 +72,7 @@ class Uploader:
             refresh_token = lines[1].replace("\n", "")
         else:
             token, refresh_token = auth.authenticate()
-            with open(fileName, "w") as f:
-                f.write(token + "\n")
-                f.write(refresh_token + "\n")
+            self._saveTokens(fileName, token, refresh_token)
         return token, refresh_token
     
     def __createSubscriptions(self, event : Event) -> None:
@@ -83,6 +93,8 @@ class Uploader:
         auth = UserAuthenticator(twitchAPIChat, scopes, force_verify=False, url='http://localhost:17563')
         token, refresh_token = self._loadStartup(self.startupChatFileName, auth)
         twitchAPIChat.set_user_authentication(token, scopes, refresh_token)
+        twitchAPIChat.refresh_used_token()
+        self._saveTokensFromTwitchAPI(self.startupChatFileName, twitchAPIChat)
         self.multiThreadChangeHostQueue = Queue()
         self.chatBot = ChatBot(self.streamChannel, twitchAPIChat, self.multiThreadChangeHostQueue, self.language)
         self.chatBotThreadPool = ThreadPool(processes=1)
@@ -128,9 +140,6 @@ class Uploader:
                         self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.IDLE)
                         print(f"{datetime.utcnow()} : No event found...")
                         time.sleep(10)
-                    for line in sys.stdin:
-                        if 'exit' == line.rstrip():
-                            exitInstruction = True
                 except Exception as err:
                     print(f"{datetime.utcnow()} : {err}")
         finally:
@@ -148,4 +157,6 @@ class Uploader:
                 thread.join()
             print("Deleting the uploader in the database...")
             self.dataBaseService.deleteUploaderByID(self.clusterName, self.id)
+            self._saveTokensFromTwitchAPI(self.startupFileName, self.twitchAPI)
+            self._saveTokensFromTwitchAPI(self.startupChatFileName, self.chatBot.twitchAPI)
             sys.exit(0)
