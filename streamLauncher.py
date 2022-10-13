@@ -78,6 +78,7 @@ class StreamLauncher:
             except BaseException as err:
                 print(err)
                 time.sleep(2)
+        print("Stream opened.")
         
         process = (
             ffmpeg.input("pipe:")
