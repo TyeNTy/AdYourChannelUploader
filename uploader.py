@@ -140,10 +140,6 @@ class Uploader:
                         self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.IDLE)
                         print(f"{datetime.utcnow()} : No event found...")
                         time.sleep(10)
-                    if(sys.stdin.isatty()):
-                        line = sys.stdin.readline()
-                        if 'exit' == line.rstrip():
-                            exitInstruction = True
                 except Exception as err:
                     print(f"{datetime.utcnow()} : {err}")
         finally:
