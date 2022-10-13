@@ -144,8 +144,7 @@ class Uploader:
                     print(f"{datetime.utcnow()} : {err}")
         finally:
             self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.DELETING)
-            thread = Thread(target = self.dataBaseService.deleteUploaderByID, args=[self.clusterName, self.id])
-            thread.start()
+            thread = self.dataBaseService.deleteUploaderByID(self.clusterName, self.id)
             if(isStreaming):
                 print("Deleting the subscriptions...")
                 self.__deleteSubscriptions()
@@ -160,5 +159,4 @@ class Uploader:
             print("Deleting the uploader in the database...")
             self._saveTokensFromTwitchAPI(self.startupFileName, self.twitchAPI)
             self._saveTokensFromTwitchAPI(self.startupChatFileName, self.chatBot.twitchAPI)
-            thread.join()
             sys.exit(0)
