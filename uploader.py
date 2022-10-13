@@ -59,7 +59,7 @@ class Uploader:
         
     def _stdinMainThread(self):
         for line in sys.stdin:
-            if line.rsplit() == "exit":
+            if line.strip() == "exit":
                 self.exitInstruction = True
                 break
         
