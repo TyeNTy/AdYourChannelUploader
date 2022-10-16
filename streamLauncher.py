@@ -52,7 +52,7 @@ class StreamLauncher:
                 print("Livestreamer is unable to handle the URL '{0}'".format(url))
             except PluginError as err:
                 print("Plugin error: {0}".format(err))
-            time.sleep(2)
+            time.sleep(10)
                 
 
         if not streams:
@@ -77,7 +77,7 @@ class StreamLauncher:
                 break
             except BaseException as err:
                 print(err)
-                time.sleep(2)
+                time.sleep(10)
         print("Stream opened.")
         
         process = (

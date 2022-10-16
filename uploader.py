@@ -37,6 +37,7 @@ class Uploader:
         
         self.twitchAPI = Twitch(self.appID, self.appSecret)
         self.twitchAPI.auto_refresh_auth = True
+        self.otherChannelTwitchAPI = Twitch(self.appID, authenticate_app=False)
         
         target_scope = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
         auth = UserAuthenticator(self.twitchAPI, target_scope, force_verify=False, url='http://localhost:17563')
@@ -86,7 +87,7 @@ class Uploader:
     
     def __createSubscriptions(self, event : Event) -> None:
         self.multiThreadEventQueue = Queue()
-        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.appID, self.myIP, 443, self.multiThreadEventQueue, event)
+        self.subscriptionHandler = SubscriptionHandler(self.otherChannelTwitchAPI, self.appID, self.myIP, 443, self.multiThreadEventQueue, event)
         self.subscriptionHandler.createFollowerSubscription(event.twitchUserName)
         self.subscriptionHandler.createSubscriptionSubscription(event.twitchUserName)
     
@@ -110,14 +111,13 @@ class Uploader:
         self.chatBotThreadPool.apply_async(self.chatBot.run, ())
         
     def runStreaming(self, event : Event) -> None:
-        
-        self.twitchAPI.__user_auth_refresh_token = event.refreshToken
-        self.twitchAPI.refresh_used_token()
+        self.otherChannelTwitchAPI.__user_auth_refresh_token = event.refreshToken
+        self.otherChannelTwitchAPI.refresh_used_token()
         
         self.__createSubscriptions(event)
         
         streamLauncher = StreamLauncher(event, self.twitchAPI, self.appID, self.appSecret, self.getStreamID, self.streamChannel)
-        streamAnalyzer = Analyzer(event, self.twitchAPI, self.appID, self.appSecret, self.multiThreadEventQueue)
+        streamAnalyzer = Analyzer(event, self.otherChannelTwitchAPI, self.appID, self.appSecret, self.multiThreadEventQueue)
         pool = ThreadPool(processes=1)
         asyncResult = pool.apply_async(streamAnalyzer.launchAnalyzer, ())
         pool.close()
