@@ -11,7 +11,7 @@ from models.subscribeEvent import SubscribeEvent
 from utils.twitchAPI import getIDOfAChannel, createListOfChatters
 
 class Analyzer:
-    def __init__(self, event : Event, twitchAPI : Twitch, appID : str, appSecret : str, multiThreadEventQueue : Queue) -> None:
+    def __init__(self, event : Event, twitchAPI : Twitch, appID : str, appSecret : str, ourChannelName : str, multiThreadEventQueue : Queue) -> None:
         self.event = event
         self.allStatistics = []
         self.alreadyFollowed = []
@@ -21,6 +21,7 @@ class Analyzer:
         
         self.appID = appID
         self.appSecret = appSecret
+        self.ourChannelName = ourChannelName
         
         self.twitchAPI = twitchAPI
         self.idOfChannel = getIDOfAChannel(self.twitchAPI, self.event.twitchUserName)
@@ -58,7 +59,7 @@ class Analyzer:
         self.initAlreadyChatting()
         allStats = []
         while(datetime.utcnow() < self.event.endTime):
-            currentChattersOurChannel = createListOfChatters("adyourchanneldev")
+            currentChattersOurChannel = createListOfChatters(self.ourChannelName)
             currentChattersOtherChannel = createListOfChatters(self.event.twitchUserName)
             listNewFollowers = []
             listNewSubscribers = []

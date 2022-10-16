@@ -117,7 +117,7 @@ class Uploader:
         self.__createSubscriptions(event)
         
         streamLauncher = StreamLauncher(event, self.twitchAPI, self.appID, self.appSecret, self.getStreamID, self.streamChannel)
-        streamAnalyzer = Analyzer(event, self.otherChannelTwitchAPI, self.appID, self.appSecret, self.multiThreadEventQueue)
+        streamAnalyzer = Analyzer(event, self.otherChannelTwitchAPI, self.appID, self.appSecret, self.streamChannel, self.multiThreadEventQueue)
         pool = ThreadPool(processes=1)
         asyncResult = pool.apply_async(streamAnalyzer.launchAnalyzer, ())
         pool.close()
