@@ -87,7 +87,7 @@ class StreamLauncher:
         )
         
         while(datetime.utcnow() < self.event.endTime):
-            process.stdin.write(fd.read(2**16))
+            process.stdin.write(fd.read(2**8))
         process.stdin.close()
         fd.close()
         

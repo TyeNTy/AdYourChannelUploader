@@ -1,4 +1,3 @@
-import multiprocessing
 from twitchio.ext import commands, routines
 from multiprocessing import Queue
 from models.event import Event
@@ -27,19 +26,29 @@ class ChatBot(commands.Bot):
             print(f"Chat bot : getting new channel {self.currentEvent.twitchUserName}")
     
     def run(self):
-        # self.change_host_task = self.change_host.start()
         return super().run()
     
     async def event_ready(self):
         # We are logged in and ready to chat and use commands...
         print(f'Logged in as | {self.nick}')
-
-    @commands.command(name="adyourchannel")
-    async def adyourchannel(self, message : commands.core.Context):
-        await self.get_channel(self.channelName).send(self.translations['adyourchannel'].format())
     
-    @commands.command(name="current")
-    async def channel(self, message : commands.core.Context):
-        twitchName = self.currentEvent.twitchUserName if self.currentEvent is not None else "no channel streamed yet"
-        await self.get_channel(self.channelName).send(self.translations['current'].format(twitchName, twitchName))
+    async def event_message(self, message):
+        if message.echo:
+            return
+        await self.handle_commands(message)
+
+    @commands.command(name="lisquidstream")
+    async def lisquidstream(self, ctx : commands.core.Context):
+        await self.get_channel(self.channelName).send(self.translations['lisquidstream'].format())
+        
+    @commands.command(name="help")
+    async def help(self, ctx : commands.core.Context):
+        await self.get_channel(self.channelName).send(self.translations['help'].format())
+        
+    @commands.command(name="channel")
+    async def channel(self, ctx : commands.core.Context):
+        if(self.currentEvent is None):
+            await self.get_channel(self.channelName).send(self.translations['channelNoEventYet'].format())
+        else:
+            await self.get_channel(self.channelName).send(self.translations['channel'].format(self.currentEvent.twitchUserName, self.currentEvent.twitchUserName))
         

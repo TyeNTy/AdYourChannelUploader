@@ -123,7 +123,7 @@ class Uploader:
         pool.close()
         streamLauncher.runStreaming()
         allStatistics = asyncResult.get()
-        analyzerProcessor = AnalyzerProcessor(event, allStatistics, self.dataBaseService)
+        analyzerProcessor = AnalyzerProcessor(self.twitchAPI, self.streamChannel, event, allStatistics, self.dataBaseService)
         self.analyzerThreads.append(Thread(target=analyzerProcessor.launchAnalyze, args=()))
         self.analyzerThreads[-1].start()
         self.__deleteSubscriptions()

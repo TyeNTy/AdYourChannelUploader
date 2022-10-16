@@ -1,2 +1,4 @@
-adyourchannel=AdYourChannel est un projet visant à promouvoir les nouveaux streamers ! Pour plus d'information : https://adyourchannel.com .
-current=Vous regardez actuellement : {}. Vous pouvez passer faire un petit coucou sur son live (et peut-être y rester !) : https://www.twitch.tv/{} .
+lisquidstream=LisquidStream est un projet visant à promouvoir les nouveaux streamers ! Pour plus d'information : https://lisquidstream.com .
+channel=Vous regardez actuellement : {}. Vous pouvez passer faire un petit coucou sur son live (et peut-être y rester !) : https://www.twitch.tv/{} .
+channelNoEventYet=Il n'y a pas encore eu de streams... Désolé !
+help=Liste des commandes : !lisquidstream, !channel, !help.

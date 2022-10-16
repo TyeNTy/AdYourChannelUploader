@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from models.ListUploaders import ListUploaders
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING
 from models.uploaderStatus import UploaderStatus
 from models.resultAnalyze import ResultAnalyze
 from models.uploader import UploaderModel
@@ -20,11 +20,14 @@ class DataBaseService:
     
     def getNextEvent(self, clusterName : str, uploaderID : int, language : str) -> Event|None:
         """Try to get the next event to take place in the uploaderID uploader inside of the cluster clusterName."""
-        result = self.database.get_collection(language).find({"clusterName" : clusterName, "uploaderID" : uploaderID, "language" : language})
+        currentDate = datetime.utcnow()
+        minDate = datetime(currentDate.year, currentDate.month, currentDate.day, currentDate.hour, 0, 0, 0)
+        maxDate = datetime(currentDate.year, currentDate.month, currentDate.day, currentDate.hour + 1, 0, 0, 0)
+        cursor = self.database.get_collection(language).find({"clusterName" : clusterName, "uploaderID" : uploaderID, "language" : language, "startTime": {"$gt": minDate}, "endTime": {"$lt": maxDate, "$gt" : currentDate}}).sort("startTime", DESCENDING)
+        result = list(cursor)
         if (result is None):
             return None
         else:
-            result = sorted(filter(lambda event : event["startTime"] > datetime.utcnow() - timedelta(minutes=1) and event["startTime"] < datetime.utcnow() + timedelta(minutes=1), result), key=lambda event : event["startTime"])
             if(len(result) == 0):
                 return None
             return Event.loadFromDictionary(result[0])
