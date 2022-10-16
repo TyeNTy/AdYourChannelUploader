@@ -37,7 +37,7 @@ class Uploader:
         
         self.twitchAPI = Twitch(self.appID, self.appSecret)
         self.twitchAPI.auto_refresh_auth = True
-        self.otherChannelTwitchAPI = Twitch(self.appID, authenticate_app=False)
+        self.otherChannelTwitchAPI = Twitch(self.appID, self.appSecret, authenticate_app=False)
         
         target_scope = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
         auth = UserAuthenticator(self.twitchAPI, target_scope, force_verify=False, url='http://localhost:17563')

@@ -23,7 +23,7 @@ class DataBaseService:
         currentDate = datetime.utcnow()
         minDate = datetime(currentDate.year, currentDate.month, currentDate.day, currentDate.hour, 0, 0, 0)
         maxDate = datetime(currentDate.year, currentDate.month, currentDate.day, currentDate.hour + 1, 0, 0, 0)
-        cursor = self.database.get_collection(language).find({"clusterName" : clusterName, "uploaderID" : uploaderID, "language" : language, "startTime": {"$gt": minDate}, "endTime": {"$lt": maxDate, "$gt" : currentDate}}).sort("startTime", DESCENDING)
+        cursor = self.database.get_collection(language).find({"clusterName" : clusterName, "uploaderID" : uploaderID, "language" : language, "startTime": {"$gte": minDate}, "endTime": {"$lte": maxDate, "$gte" : currentDate}}).sort("startTime", DESCENDING)
         result = list(cursor)
         if (result is None):
             return None
