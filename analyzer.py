@@ -72,7 +72,7 @@ class Analyzer:
                     elif(event["subscription"]["type"] == "channel.subscribe"):
                         subscribeEvent = SubscribeEvent(event["event"])
                         listNewSubscribers.append(subscribeEvent)
-            currentStatistic = Statistic(datetime.utcnow(), currentChattersOurChannel, currentChattersOtherChannel, listNewFollowers, listNewSubscribers, len(self.alreadyFollowed), 0)
+            currentStatistic = Statistic(datetime.utcnow(), currentChattersOurChannel, currentChattersOtherChannel, listNewFollowers, listNewSubscribers)
             allStats.append(currentStatistic)
             sleep(5)
         print(f"Analyzing the channel {self.event.twitchUserName}... Done")

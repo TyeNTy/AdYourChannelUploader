@@ -5,12 +5,18 @@ from models.resultAnalyze import ResultAnalyze
 from models.statistic import Statistic
 from abstraction.IDataBaseService import IDataBaseService
 from models.statisticTimeline import StatisticTimeline
+from models.subscribeEvent import SubscribeEvent
+from twitchAPI import Twitch
+from utils.twitchAPI import checkFollow, getIDOfAChannel
 
 class AnalyzerProcessor:
-    def __init__(self, event : Event, data : list[Statistic], dataBaseService : IDataBaseService) -> None:
+    def __init__(self, twitchAPI : Twitch, channelName : str, event : Event, data : list[Statistic], dataBaseService : IDataBaseService) -> None:
         self.event = event
         self.data = data
         self.dataBaseService = dataBaseService
+        self.twitchAPI = twitchAPI
+        self.channelName = channelName
+        self.ourChannelID = getIDOfAChannel(self.twitchAPI, self.channelName)
     
     def __testIfViewerInList(self, viewer : str, listNewViewers : list[tuple[datetime, str]]) -> bool:
         for _, otherViewer in listNewViewers:
@@ -43,23 +49,34 @@ class AnalyzerProcessor:
     def allNewFollows(self) -> list[FollowEvent]:
         newFollowers = []
         for statistic in self.data:
-            newFollowers.extend(statistic.listNewFollowers)
+            for follower in statistic.listNewFollowers:
+                if(checkFollow(follower.userID)):
+                    newFollowers.append(follower)
         return newFollowers
     
-    def __createTimeline(self, listNewViewers : list[tuple[datetime, str]], listNewFollowers : list[FollowEvent]) -> StatisticTimeline:
+    def allNewSubs(self) -> list[SubscribeEvent]:
+        newSubscribers = []
+        for statistic in self.data:
+            newSubscribers.extend(statistic.listNewSubscribers)
+        return newSubscribers
+    
+    def __createTimeline(self, listNewViewers : list[tuple[datetime, str]], listNewFollowers : list[FollowEvent], listNewSubscribers : list[SubscribeEvent]) -> StatisticTimeline:
         
         timeline = StatisticTimeline(self.event.startTime, self.event.endTime)
         for date, _ in listNewViewers:
             timeline.addNewViewer(date)
         for newFollower in listNewFollowers:
             timeline.addNewFollow(newFollower.followedAT)
+        for newSubscriber in listNewSubscribers:
+            timeline.addNewSubEvent(newSubscriber)
         return timeline
     
     def launchAnalyze(self) -> ResultAnalyze:
         print("Starting to analyze the data...")
         listNewViewers = self.getViewerWhoOnlyWentToTheOtherChannel()
         newFollowers = self.allNewFollows()
-        timeline = self.__createTimeline(listNewViewers, newFollowers)
+        newSubscribers = self.allNewSubs()
+        timeline = self.__createTimeline(listNewViewers, newFollowers, newSubscribers)
         resultAnalyze = ResultAnalyze(self.event.id, timeline)
         print("Analyzing the data... Done")
         print("Sending the result to the database...")

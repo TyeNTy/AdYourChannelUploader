@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from tracemalloc import Statistic
 from typing import Dict
+from models.subscribeEvent import SubscribeEvent
+from models.subscriberTiers import SubscriberTiers
 
 from models.timeEvents import TimeEvents
 
@@ -47,6 +49,14 @@ class StatisticTimeline:
             self.__sortTimelinePerMinute()
         else:
             self.timeline[index].newFollowers += 1
+    
+    def addNewSubEvent(self, subEvent : SubscribeEvent) -> None:
+        if(subEvent.tier == SubscriberTiers.TIER1):
+            self.addNewSubTier1(subEvent.subscribedAT)
+        elif(subEvent.tier == SubscriberTiers.TIER2):
+            self.addNewSubTier2(subEvent.subscribedAT)
+        elif(subEvent.tier == SubscriberTiers.TIER3):
+            self.addNewSubTier3(subEvent.subscribedAT)
     
     def addNewSubTier1(self, date : datetime) -> None:
         index = self.__findIndexBetweenMinutes(date)

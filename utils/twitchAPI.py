@@ -22,6 +22,15 @@ def createListOfChatters(channelName : str) -> list[str]:
             allChattersName.extend(chatters)
         return allChattersName
 
+def checkFollow(twitchAPI : Twitch, followerID : str, otherChannelID : str):
+    header = {
+        "content-type": "application/json",
+        "Client-Id": twitchAPI.app_id,
+        "Authorization": f"Bearer {twitchAPI.get_app_token()}"
+    }
+    response = requests.get(f'https://api.twitch.tv/helix/users/follows?to_id={followerID}&from_id={otherChannelID}', headers=header).json()
+    return response.status_code == 202
+
 def changeChannelInformation(twitchAPI : Twitch, channelName : str, newTitle : str, broadcasterLanguage : str) -> None:
     """Change the information of a stream. Requires user authentication."""
     twitchAPI.modify_channel_information(getIDOfAChannel(twitchAPI, channelName), title = newTitle, broadcaster_language=broadcasterLanguage)
