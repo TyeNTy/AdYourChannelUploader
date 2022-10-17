@@ -37,13 +37,12 @@ class Uploader:
         
         self.twitchAPI = Twitch(self.appID, self.appSecret)
         self.twitchAPI.auto_refresh_auth = True
-        self.otherChannelTwitchAPI = Twitch(self.appID, self.appSecret)
         
-        target_scope = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
-        auth = UserAuthenticator(self.twitchAPI, target_scope, force_verify=False, url='http://localhost:17563')
+        self.target_scopes = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
+        auth = UserAuthenticator(self.twitchAPI, self.target_scopes, force_verify=False, url='http://localhost:17563')
         # this will open your default browser and prompt you with the twitch verification website
         token, refresh_token = self._loadStartup(self.startupFileName, auth)
-        self.twitchAPI.set_user_authentication(token, target_scope, refresh_token)
+        self.twitchAPI.set_user_authentication(token, self.target_scopes, refresh_token)
         self.twitchAPI.refresh_used_token()
         self._saveTokensFromTwitchAPI(self.startupFileName, self.twitchAPI)
         
@@ -87,7 +86,7 @@ class Uploader:
     
     def __createSubscriptions(self, event : Event) -> None:
         self.multiThreadEventQueue = Queue()
-        self.subscriptionHandler = SubscriptionHandler(self.otherChannelTwitchAPI, self.appID, self.myIP, 443, self.multiThreadEventQueue, event)
+        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.myIP, 443, self.multiThreadEventQueue, event)
         self.subscriptionHandler.createFollowerSubscription(event.twitchUserName)
         self.subscriptionHandler.createSubscriptionSubscription(event.twitchUserName)
     
@@ -111,22 +110,23 @@ class Uploader:
         self.chatBotThreadPool.apply_async(self.chatBot.run, ())
         
     def runStreaming(self, event : Event) -> None:
-        self.otherChannelTwitchAPI.__user_auth_refresh_token = event.refreshToken
-        self.otherChannelTwitchAPI.refresh_used_token()
-        
-        self.__createSubscriptions(event)
-        
-        streamLauncher = StreamLauncher(event, self.twitchAPI, self.appID, self.appSecret, self.getStreamID, self.streamChannel)
-        streamAnalyzer = Analyzer(event, self.otherChannelTwitchAPI, self.appID, self.appSecret, self.streamChannel, self.multiThreadEventQueue)
-        pool = ThreadPool(processes=1)
-        asyncResult = pool.apply_async(streamAnalyzer.launchAnalyzer, ())
-        pool.close()
-        streamLauncher.runStreaming()
-        allStatistics = asyncResult.get()
-        analyzerProcessor = AnalyzerProcessor(self.twitchAPI, self.streamChannel, event, allStatistics, self.dataBaseService)
-        self.analyzerThreads.append(Thread(target=analyzerProcessor.launchAnalyze, args=()))
-        self.analyzerThreads[-1].start()
-        self.__deleteSubscriptions()
+        user = self.dataBaseService.getUserByName(event.twitchUserName)
+        if(user is not None):
+            self.__createSubscriptions(event)
+            
+            streamLauncher = StreamLauncher(event, self.twitchAPI, self.appID, self.appSecret, self.getStreamID, self.streamChannel)
+            streamAnalyzer = Analyzer(event, self.twitchAPI, self.appID, self.appSecret, self.streamChannel, self.multiThreadEventQueue)
+            pool = ThreadPool(processes=1)
+            asyncResult = pool.apply_async(streamAnalyzer.launchAnalyzer, ())
+            pool.close()
+            streamLauncher.runStreaming()
+            allStatistics = asyncResult.get()
+            analyzerProcessor = AnalyzerProcessor(self.twitchAPI, self.streamChannel, event, allStatistics, self.dataBaseService)
+            self.analyzerThreads.append(Thread(target=analyzerProcessor.launchAnalyze, args=()))
+            self.analyzerThreads[-1].start()
+            self.__deleteSubscriptions()
+        else:
+            print(f"User {event.twitchUserName} is not found... cancelling the event...")
         
     
     def run(self) -> None:

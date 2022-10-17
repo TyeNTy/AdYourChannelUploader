@@ -10,11 +10,10 @@ from threading import Thread
 
 class SubscriptionHandler:
     
-    def __init__(self, twitchAPI : Twitch, clientID : str, myIP : str, portToListen : int, multiThreadEventQueue : Queue, event : Event) -> None:
+    def __init__(self, twitchAPI : Twitch, myIP : str, portToListen : int, multiThreadEventQueue : Queue, event : Event) -> None:
         
         self.myIP = myIP
         self.twitchAPI = twitchAPI
-        self.clientID = clientID
         self.portToListen = portToListen
         
         self.isWebServerLaunched = False
@@ -41,7 +40,7 @@ class SubscriptionHandler:
             self.isWebServerLaunched = True
     
     def createFollowerSubscription(self, channelName : str) -> None:
-        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, self.clientID, channelName, "channel.follow", f"https://{self.myIP}/followerHandler")
+        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, channelName, "channel.follow", f"https://{self.myIP}/followerHandler")
         if(response.status_code == 202):
             self.followerSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()
@@ -49,7 +48,7 @@ class SubscriptionHandler:
             print(f"Error creating follower subscription, status code : {response.status_code}")
     
     def createSubscriptionSubscription(self, channelName : str) -> None:
-        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, self.clientID, channelName, "channel.subscribe", f"https://{self.myIP}/subscriptionHandler")
+        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, channelName, "channel.subscribe", f"https://{self.myIP}/subscriptionHandler")
         if(response.status_code == 202):
             self.SubscriptionSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()

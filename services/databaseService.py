@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from models.ListUploaders import ListUploaders
 from pymongo import MongoClient, DESCENDING
+from models.UserModel import UserModel
 from models.uploaderStatus import UploaderStatus
 from models.resultAnalyze import ResultAnalyze
 from models.uploader import UploaderModel
@@ -13,6 +14,7 @@ class DataBaseService:
         self.client = MongoClient(host=mongoDBConnectionString)
         self.database = self.client[dataBaseName]
         self.uploadersCollection = self.database.get_collection("clusters")
+        self.usersCollection = self.database.get_collection("users")
     
     def getEvent(self, event : Event) -> Event:
         """Try to get the event."""
@@ -31,6 +33,13 @@ class DataBaseService:
             if(len(result) == 0):
                 return None
             return Event.loadFromDictionary(result[0])
+        
+    def getUserByName(self, twitchUserName : str) -> UserModel|None:
+        result = self.usersCollection.find_one({"twitchUserName":twitchUserName})
+        if result is not None:
+            return UserModel.loadFromDictionary(result)
+        else:
+            return None
 
     def createEvent(self, event : Event) -> Event:
         """Create an event in the data set."""

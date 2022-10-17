@@ -4,6 +4,7 @@ from models.uploaderStatus import UploaderStatus
 from models.resultAnalyze import ResultAnalyze
 from models.uploader import UploaderModel
 from models.event import Event
+from models.UserModel import UserModel
 
 class IDataBaseService(metaclass=abc.ABCMeta):
     @classmethod
@@ -24,7 +25,9 @@ class IDataBaseService(metaclass=abc.ABCMeta):
                 hasattr(subclass, 'addResultAnalyze') and 
                 callable(subclass.addResultAnalyze) and
                 hasattr(subclass, 'updateStatusUploader') and 
-                callable(subclass.updateStatusUploader))
+                callable(subclass.updateStatusUploader) and
+                hasattr(subclass, "getUserByName") and
+                callable(subclass.getUserByName))
     
     @abc.abstractmethod
     def getEvent(self, event : Event) -> Event:
@@ -69,4 +72,9 @@ class IDataBaseService(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def updateStatusUploader(self, clusterName : str, uploaderID : int, status : UploaderStatus) -> UploaderModel|None:
         """Update the status of an uploader."""
+        raise NotImplementedError
+    
+    @abc.abstractmethod
+    def getUserByName(self, twitchUserName : str) -> UserModel|None:
+        """Get a User by his Twitch user name."""
         raise NotImplementedError
