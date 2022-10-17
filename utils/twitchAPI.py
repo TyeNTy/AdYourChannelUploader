@@ -39,9 +39,10 @@ def generateRandomString(length : int) -> requests.Response:
     """Generate a random string of a given length."""
     return ''.join(random.choice(string.ascii_letters) for _ in range(length))
     
-def createNewSubscription(secret : str, twitchAPI : Twitch, clientID : str, channelName : str, typeOfSubscription : str, callBackURL) -> requests.Response:
+def createNewSubscription(secret : str, twitchAPI : Twitch, channelName : str, typeOfSubscription : str, callBackURL) -> requests.Response:
     """Create a new subscription for a channel."""
-    oauthToken = twitchAPI.get_user_auth_token()
+    oauthToken = twitchAPI.get_app_token()
+    clientID = twitchAPI.app_id
     dictData = {
         "type":typeOfSubscription,
         "version":"1",

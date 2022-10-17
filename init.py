@@ -12,7 +12,7 @@ def generateRandomEvents(databaseService : DataBaseService) -> None:
     while(currentDelta < numberOfHoursInAWeek):
         currentDelta += randint(1, 5)
         duration = randint(0,2)
-        event = Event(None, "rlgym", "test", "cluster1", 0, currentDate + timedelta(hours=currentDelta), currentDate + timedelta(hours= currentDelta + duration, minutes=59), "fr", "test", ["this", "is", "a", "test"])
+        event = Event(None, "rlgym", "cluster1", 0, currentDate + timedelta(hours=currentDelta), currentDate + timedelta(hours= currentDelta + duration, minutes=59), "fr", "test", ["this", "is", "a", "test"])
         currentDelta += duration
         databaseService.createEvent(event)
     
@@ -24,8 +24,8 @@ def initUploader(configuration : dict[str, str]) -> Uploader:
     
     # generateRandomEvents(databaseService)
     
-    # databaseService.createEvent(Event(None, "rlgym", "alagnyglrrs8y9v3uj24dife3646xvijo5zhxvtiobhn61hrgs", "cluster1", 0, datetime.utcnow(), datetime.utcnow() + timedelta(minutes=4), "fr", "test", ["this", "is", "a", "test"]))
-    # databaseService.createEvent(Event(None, "rlgym", "test", "cluster1", 0, datetime.utcnow() + timedelta(minutes=5), datetime.utcnow() + timedelta(minutes=9), "fr", "test", ["this", "is", "a", "test"]))
+    # databaseService.createEvent(Event(None, "rlgym", "cluster1", 0, datetime.utcnow(), datetime.utcnow() + timedelta(minutes=4), "fr", "test", ["this", "is", "a", "test"]))
+    # databaseService.createEvent(Event(None, "rlgym", "cluster1", 0, datetime.utcnow() + timedelta(minutes=5), datetime.utcnow() + timedelta(minutes=9), "fr", "test", ["this", "is", "a", "test"]))
     
     uploader = Uploader(configuration["CLUSTER_NAME"], configuration["LANGUAGE"], databaseService, configuration["URL_CALL_BACK"], configuration["APP_ID"], configuration["APP_SECRET"], configuration["GET_STREAM_ID"], configuration["STREAM_CHANNEL"])
     uploader.run()
