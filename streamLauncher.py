@@ -10,19 +10,15 @@ import ffmpeg
 
 class StreamLauncher:
     knownTwitchEncoding : list[Encoding] = Resolution.values()
-    pathToTmpVideoPipe = "tmp"
-    tmpVideoPipeName = "tmpVideoPipe"
     
     def __init__(self, event : Event, twitchAPI : Twitch, appID : str, appSecret : str, getStreamID : str, streamChannel : str):
         self.event = event
-        self.fullPathVideoPipe = os.path.join(self.pathToTmpVideoPipe, self.tmpVideoPipeName)
         self.appID = appID
         self.appSecret = appSecret
         self.getStreamID = getStreamID
         self.twitchAPI = twitchAPI
         self.streamChannel = streamChannel
         
-        self.twitchIniFile = "twitch.ini"
         self.streamingServer = "rtmp://cdg10.contribute.live-video.net/app/"
         
         self.streamKey = self.twitchAPI.get_stream_key(getIDOfAChannel(self.twitchAPI, self.streamChannel))["data"][0]["stream_key"]
@@ -44,7 +40,8 @@ class StreamLauncher:
         streamLink.set_option("http-headers", f"Client-Id={self.getStreamID}")
         
         # Attempt to fetch streams
-        while(datetime.utcnow() < self.event.endTime):
+        foundStream = False
+        while(datetime.utcnow() < self.event.endTime and not foundStream):
             try:
                 streams = streamLink.streams(url)
                 break
@@ -52,21 +49,23 @@ class StreamLauncher:
                 print("Livestreamer is unable to handle the URL '{0}'".format(url))
             except PluginError as err:
                 print("Plugin error: {0}".format(err))
-            time.sleep(10)
                 
 
-        if not streams:
-            print("No streams found on URL '{0}'".format(url))
+            if not streams:
+                print("No streams found on URL '{0}'".format(url))
+                time.sleep(10)
+            else:
+                maxQuality = None
+                for quality in self.knownTwitchEncoding:
+                    if quality in streams:
+                        maxQuality = quality
+                        break
 
-        maxQuality = None
-        for quality in self.knownTwitchEncoding:
-            if quality in streams:
-                maxQuality = quality
-                break
-
-        # Look for specified stream
-        if maxQuality not in streams:
-            print("Unable to find '{0}' stream on URL '{1}'".format(maxQuality, url))
+                if maxQuality is not None:
+                    foundStream = True
+                else:
+                    time.sleep(10)
+                
         print(f"Starting to stream with quality : {maxQuality}")
         self.initChannelInformation()
         

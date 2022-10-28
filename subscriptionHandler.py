@@ -34,7 +34,7 @@ class SubscriptionHandler:
         if not self.isWebServerLaunched:
             self.subscriptionHandler = partial(SubscriptionHandlerEndPoint, self.secretSubscriptionOurChannel, self.multiThreadEventQueue)
             self.httpServer = HTTPServer(('', self.portToListen), self.subscriptionHandler)
-            self.httpServer.socket = ssl.wrap_socket (self.httpServer.socket, keyfile=f"C:\\Certbot\\live\\{self.myIP}\\privkey.pem" , certfile=f'C:\\Certbot\\live\\{self.myIP}\\fullchain.pem', server_side=True)
+            self.httpServer.socket = ssl.wrap_socket(self.httpServer.socket, keyfile=f"C:\\Certbot\\live\\{self.myIP}\\privkey.pem" , certfile=f'C:\\Certbot\\live\\{self.myIP}\\fullchain.pem', server_side=True)
             self.serverThread = Thread(target=self.httpServer.serve_forever)
             self.serverThread.start()
             self.isWebServerLaunched = True
@@ -57,7 +57,8 @@ class SubscriptionHandler:
     
     def shutdown(self):
         if self.isWebServerLaunched:
+            print("Stopping the subscription web server...")
             self.httpServer.shutdown()
             self.serverThread.join()
             self.isWebServerLaunched = False
-        print("Web server subscription handler stopped.")
+            print("Subscription web server stopped.")

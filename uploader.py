@@ -38,6 +38,8 @@ class Uploader:
         self.twitchAPI = Twitch(self.appID, self.appSecret)
         self.twitchAPI.auto_refresh_auth = True
         
+        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.myIP, 443, self.multiThreadEventQueue, event)
+        
         self.target_scopes = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
         auth = UserAuthenticator(self.twitchAPI, self.target_scopes, force_verify=False, url='http://localhost:17563')
         # this will open your default browser and prompt you with the twitch verification website
@@ -86,7 +88,6 @@ class Uploader:
     
     def __createSubscriptions(self, event : Event) -> None:
         self.multiThreadEventQueue = Queue()
-        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.myIP, 443, self.multiThreadEventQueue, event)
         self.subscriptionHandler.createFollowerSubscription(event.twitchUserName)
         self.subscriptionHandler.createSubscriptionSubscription(event.twitchUserName)
     
