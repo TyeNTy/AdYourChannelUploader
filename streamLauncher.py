@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
-import os
+from datetime import datetime
 import time
 from streamlink import Streamlink, NoPluginError, PluginError
 from models.event import Event
 from twitchAPI import Twitch
 from utils.twitchAPI import changeChannelInformation, getIDOfAChannel
-from models.videoEncoding import Encoding, VideoEncoding, Resolution
+from models.videoEncoding import Encoding, Resolution
 import ffmpeg
 
 class StreamLauncher:

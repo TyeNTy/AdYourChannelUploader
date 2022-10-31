@@ -35,10 +35,15 @@ class SubscriptionHandler:
             self.subscriptionHandler = partial(SubscriptionHandlerEndPoint, self.secretSubscriptionOurChannel, self.multiThreadEventQueue)
             self.httpServer = HTTPServer(('', self.portToListen), self.subscriptionHandler)
             self.httpServer.socket = ssl.wrap_socket(self.httpServer.socket, keyfile=f"C:\\Certbot\\live\\{self.myIP}\\privkey.pem" , certfile=f'C:\\Certbot\\live\\{self.myIP}\\fullchain.pem', server_side=True)
-            self.serverThread = Thread(target=self.httpServer.serve_forever)
+            self.serverThread = Thread(target=self.__server_forever)
+            self.serverThread.daemon = True
             self.serverThread.start()
             self.isWebServerLaunched = True
     
+    def __server_forever(self):
+        with self.httpServer:
+            self.httpServer.serve_forever()
+
     def createFollowerSubscription(self, channelName : str) -> None:
         response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, channelName, "channel.follow", f"https://{self.myIP}/followerHandler")
         if(response.status_code == 202):
