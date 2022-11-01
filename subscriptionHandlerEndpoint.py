@@ -2,7 +2,6 @@ from http.server import BaseHTTPRequestHandler
 import json
 from multiprocessing import Queue
 from utils.twitchAPI import validateSignature
-from functools import partial
 
 class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
     def __init__(self, secretSubscriptionOurChannel : str, multiThreadEventQueue : Queue, *args, **kwargs) -> None:
@@ -13,7 +12,7 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
     def do_POST(self):
         body = str(self.rfile.read(int(self.headers['Content-Length'])), "utf-8")
         bodyDict = json.loads(body)
-        is_valid = validateSignature(self.secretSubscriptionOurChannel, self.headers, body)
+        is_valid = validateSignature(self.secretSubscriptionOurChannel, self.headers, body)  # type: ignore
         
         if(is_valid):
             if(self.headers["twitch-eventsub-message-type"] == "webhook_callback_verification"):

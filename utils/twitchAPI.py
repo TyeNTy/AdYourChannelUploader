@@ -33,9 +33,9 @@ def checkFollow(twitchAPI : Twitch, followerID : str, otherChannelID : str):
 
 def changeChannelInformation(twitchAPI : Twitch, channelName : str, newTitle : str, broadcasterLanguage : str) -> None:
     """Change the information of a stream. Requires user authentication."""
-    twitchAPI.modify_channel_information(getIDOfAChannel(twitchAPI, channelName), title = newTitle, broadcaster_language=broadcasterLanguage)
+    twitchAPI.modify_channel_information(str(getIDOfAChannel(twitchAPI, channelName)), title = newTitle, broadcaster_language=broadcasterLanguage)
 
-def generateRandomString(length : int) -> requests.Response:
+def generateRandomString(length : int) -> str:
     """Generate a random string of a given length."""
     return ''.join(random.choice(string.ascii_letters) for _ in range(length))
     

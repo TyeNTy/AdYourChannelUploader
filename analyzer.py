@@ -35,7 +35,7 @@ class Analyzer:
         stillHavePagination = True
         nbLoaded = 0
         while(stillHavePagination):
-            data = self.twitchAPI.get_users_follows(to_id = self.idOfChannel, after=pagination, first=100)
+            data = self.twitchAPI.get_users_follows(to_id = str(self.idOfChannel), after=pagination, first=100)
             followers = data['data']
             nbLoaded += len(followers)
             total = data['total']+1
