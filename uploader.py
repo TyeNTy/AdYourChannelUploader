@@ -37,8 +37,11 @@ class Uploader:
         
         self.twitchAPI = Twitch(self.appID, self.appSecret)
         self.twitchAPI.auto_refresh_auth = True
+    
+        self.multiThreadChangeHostQueue : Queue = Queue()
+        self.multiThreadEventQueue : Queue = Queue()
         
-        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.myIP, 443, self.multiThreadEventQueue, event)
+        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.myIP, 443, self.multiThreadEventQueue)
         
         self.target_scopes = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
         auth = UserAuthenticator(self.twitchAPI, self.target_scopes, force_verify=False, url='http://localhost:17563')
@@ -50,9 +53,6 @@ class Uploader:
         
         newUploaderModel = dataBaseService.addUploader(clusterName, UploaderModel(clusterName, language, datetime.utcnow()))
         self.id = newUploaderModel.id
-    
-        self.multiThreadChangeHostQueue : Queue = None
-        self.multiThreadEventQueue : Queue = None
         self.exitInstruction = False
         
         self.stdinThread = Thread(target=self._stdinMainThread)
@@ -87,7 +87,6 @@ class Uploader:
         return token, refresh_token
     
     def __createSubscriptions(self, event : Event) -> None:
-        self.multiThreadEventQueue = Queue()
         self.subscriptionHandler.createFollowerSubscription(event.twitchUserName)
         self.subscriptionHandler.createSubscriptionSubscription(event.twitchUserName)
     

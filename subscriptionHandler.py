@@ -10,7 +10,7 @@ from threading import Thread
 
 class SubscriptionHandler:
     
-    def __init__(self, twitchAPI : Twitch, myIP : str, portToListen : int, multiThreadEventQueue : Queue, event : Event) -> None:
+    def __init__(self, twitchAPI : Twitch, myIP : str, portToListen : int, multiThreadEventQueue : Queue, event : Event = None) -> None:
         
         self.myIP = myIP
         self.twitchAPI = twitchAPI
@@ -25,6 +25,9 @@ class SubscriptionHandler:
         self.event = event
         
         self.multiThreadEventQueue = multiThreadEventQueue
+    
+    def setEvent(self, event : Event) -> None:
+        self.event = event
     
     def deleteSubscription(self, id : str) -> None:
         if(id is not None):
