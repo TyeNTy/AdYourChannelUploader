@@ -152,15 +152,12 @@ class Uploader:
                     print(f"{datetime.utcnow()} : {err}")
         finally:
             self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.DELETING)
-            thread = self.dataBaseService.deleteUploaderByID(self.clusterName, self.id)
+            self.dataBaseService.deleteUploaderByID(self.clusterName, self.id)
             if(isStreaming):
                 print("Deleting the subscriptions...")
                 self.__deleteSubscriptions()
-                print("Stopping webserver...")
-                self.subscriptionHandler.shutdown()
-            print("Closing the chat bot...")
-            # self.chatBotThreadPool.terminate()
-            # self.chatBotThreadPool.join()
+            print("Stopping subscription handler...")
+            self.subscriptionHandler.shutdown()
             print("Waiting the analyzer threads...")
             for thread in self.analyzerThreads:
                 thread.join()
