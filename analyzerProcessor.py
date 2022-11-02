@@ -50,7 +50,7 @@ class AnalyzerProcessor:
         newFollowers = []
         for statistic in self.data:
             for follower in statistic.listNewFollowers:
-                if(checkFollow(follower.userID)):
+                if(checkFollow(self.twitchAPI, follower.userID, self.ourChannelID)):
                     newFollowers.append(follower)
         return newFollowers
     

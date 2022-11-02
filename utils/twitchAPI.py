@@ -8,8 +8,8 @@ import requests
 
 from models.event import Event
 
-def getIDOfAChannel(twitchAPI : Twitch, channelName : str) -> int:
-    return int(twitchAPI.get_users(logins = [channelName])['data'][0]['id'])
+def getIDOfAChannel(twitchAPI : Twitch, channelName : str) -> str:
+    return twitchAPI.get_users(logins = [channelName])['data'][0]['id']
 
 def getListOfChatters(channelName : str) -> dict:
     return requests.get(f"https://tmi.twitch.tv/group/user/{channelName}/chatters").json()
@@ -22,18 +22,27 @@ def createListOfChatters(channelName : str) -> list[str]:
             allChattersName.extend(chatters)
         return allChattersName
 
-def checkFollow(twitchAPI : Twitch, followerID : str, otherChannelID : str):
+def getFollowerReponse(twitchAPI : Twitch, fromChannelID : str, toChannelID : str) -> requests.Response:
     header = {
         "content-type": "application/json",
         "Client-Id": twitchAPI.app_id,
         "Authorization": f"Bearer {twitchAPI.get_app_token()}"
     }
-    response = requests.get(f'https://api.twitch.tv/helix/users/follows?to_id={followerID}&from_id={otherChannelID}', headers=header).json()
-    return response.status_code == 202
+    response = requests.get(f'https://api.twitch.tv/helix/users/follows?to_id={toChannelID}&from_id={fromChannelID}', headers=header).json()
+    return response
+
+def checkFollow(twitchAPI : Twitch, fromChannelID : str, toChannelID : str) -> bool:
+    header = {
+        "content-type": "application/json",
+        "Client-Id": twitchAPI.app_id,
+        "Authorization": f"Bearer {twitchAPI.get_app_token()}"
+    }
+    response = requests.get(f'https://api.twitch.tv/helix/users/follows?to_id={toChannelID}&from_id={fromChannelID}', headers=header).json()
+    return response["total"] == 1
 
 def changeChannelInformation(twitchAPI : Twitch, channelName : str, newTitle : str, broadcasterLanguage : str) -> None:
     """Change the information of a stream. Requires user authentication."""
-    twitchAPI.modify_channel_information(str(getIDOfAChannel(twitchAPI, channelName)), title = newTitle, broadcaster_language=broadcasterLanguage)
+    twitchAPI.modify_channel_information(getIDOfAChannel(twitchAPI, channelName), title = newTitle, broadcaster_language=broadcasterLanguage)
 
 def generateRandomString(length : int) -> str:
     """Generate a random string of a given length."""
@@ -47,7 +56,7 @@ def createNewSubscription(secret : str, twitchAPI : Twitch, channelName : str, t
         "type":typeOfSubscription,
         "version":"1",
         "condition":{
-            "broadcaster_user_id":str(getIDOfAChannel(twitchAPI, channelName))
+            "broadcaster_user_id":getIDOfAChannel(twitchAPI, channelName)
         },
         "transport":{
             "method":"webhook",
