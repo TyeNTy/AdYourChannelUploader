@@ -44,7 +44,6 @@ class StreamLauncher:
         while(datetime.utcnow() < self.event.endTime and not foundStream):
             try:
                 streams = streamLink.streams(url)
-                break
             except NoPluginError:
                 print("Livestreamer is unable to handle the URL '{0}'".format(url))
             except PluginError as err:
