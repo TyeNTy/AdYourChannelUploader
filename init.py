@@ -3,6 +3,7 @@ from random import randint
 from models.event import Event
 from uploader import Uploader
 from services.databaseService import DataBaseService
+import utils.logger
 
 def generateRandomEvents(databaseService : DataBaseService) -> None:
     numberOfHoursInAWeek = 24*7
@@ -17,8 +18,9 @@ def generateRandomEvents(databaseService : DataBaseService) -> None:
         databaseService.createEvent(event)
     
 
-def initUploader(configuration : dict[str, str]) -> Uploader:
+def initUploader(configuration : dict[str, str]) -> None:
     # properties = loadConfig()
+    utils.logger.loadConfig()
     
     databaseService = DataBaseService(configuration["DATABASE_CONNECTION_STRING"], configuration["DATABASE_NAME"])
     

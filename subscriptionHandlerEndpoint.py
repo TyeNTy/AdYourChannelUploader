@@ -12,7 +12,7 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
     def do_POST(self):
         body = str(self.rfile.read(int(self.headers['Content-Length'])), "utf-8")
         bodyDict = json.loads(body)
-        is_valid = validateSignature(self.secretSubscriptionOurChannel, self.headers, body)  # type: ignore
+        is_valid = validateSignature(self.secretSubscriptionOurChannel, self.headers, body)
         
         if(is_valid):
             if(self.headers["twitch-eventsub-message-type"] == "webhook_callback_verification"):

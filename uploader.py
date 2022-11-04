@@ -15,11 +15,14 @@ from streamLauncher import StreamLauncher
 from multiprocessing.pool import ThreadPool
 from twitchAPI import Twitch, AuthScope, UserAuthenticator
 from subscriptionHandler import SubscriptionHandler
+from utils.logger import getChildLogger
 
 from utils.twitchAPI import listAllEventSub
 
 class Uploader:
     def __init__(self, clusterName : str, language : str, dataBaseService : IDataBaseService, myIP : str, appID : str, appSecret : str, getStreamID : str, streamChannel : str) -> None:
+        self.logger = getChildLogger("uploader")
+        
         self.startupFileName = "startup.cfg"
         self.startupChatFileName = "startupChat.cfg"
         
@@ -62,6 +65,7 @@ class Uploader:
     def _stdinMainThread(self):
         for line in sys.stdin:
             if line.strip() == "exit":
+                self.logger.info("Stdin Thread received exit instruction...")
                 self.exitInstruction = True
                 break
         
@@ -91,9 +95,11 @@ class Uploader:
         self.subscriptionHandler.createSubscriptionSubscription(event.twitchUserName)
     
     def __deleteSubscriptions(self) -> None:
+        self.logger.info("Deleting the subscriptions...")
         allEvents = listAllEventSub(self.twitchAPI)
         for event in allEvents:
             self.subscriptionHandler.deleteSubscription(event['id'])
+        self.logger.info("Deleting the subscriptions... DONE !")
 
     def __initChatBot(self) -> None:
         scopes = [AuthScope.CHAT_EDIT, AuthScope.CHAT_READ, AuthScope.CHANNEL_MANAGE_BROADCAST]
@@ -126,7 +132,7 @@ class Uploader:
             self.analyzerThreads[-1].start()
             self.__deleteSubscriptions()
         else:
-            print(f"User {event.twitchUserName} is not found... cancelling the event...")
+            self.logger.error(f"User {event.twitchUserName} is not found... The event cannot be launched...")
         
     
     def run(self) -> None:
@@ -137,7 +143,7 @@ class Uploader:
                 try:
                     nextEvent = self.dataBaseService.getNextEvent(self.clusterName, self.id, self.language)
                     if(nextEvent is not None):
-                        print(nextEvent)
+                        self.logger.info(f"New event found - {nextEvent}")
                         isStreaming = True
                         self.multiThreadChangeHostQueue.put(nextEvent)
                         self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.STREAMING)
@@ -146,22 +152,24 @@ class Uploader:
                         isStreaming = False
                     else:
                         self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.IDLE)
-                        print(f"{datetime.utcnow()} : No event found...")
+                        self.logger.info(f"No event found...")
                         time.sleep(10)
                 except Exception as err:
-                    print(f"{datetime.utcnow()} : {err}")
+                    self.logger.error(err)
         finally:
+            self.logger.info("Deleting the uploader in the database...")
             self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.DELETING)
             self.dataBaseService.deleteUploaderByID(self.clusterName, self.id)
             if(isStreaming):
-                print("Deleting the subscriptions...")
                 self.__deleteSubscriptions()
-            print("Stopping subscription handler...")
+            self.logger.info("Stopping subscription handler...")
             self.subscriptionHandler.shutdown()
-            print("Waiting the analyzer threads...")
+            self.logger.info("Stopping subscription handler... DONE !")
+            self.logger.info("Waiting the analyzer threads...")
             for thread in self.analyzerThreads:
                 thread.join()
-            print("Deleting the uploader in the database...")
+            self.logger.info("Waiting the analyzer threads... DONE !")
             self._saveTokensFromTwitchAPI(self.startupFileName, self.twitchAPI)
             self._saveTokensFromTwitchAPI(self.startupChatFileName, self.chatBot.twitchAPI)
+            self.logger.info("Deleting the uploader in the database... DONE !")
             sys.exit(0)

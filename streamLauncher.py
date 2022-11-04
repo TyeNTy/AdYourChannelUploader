@@ -6,11 +6,14 @@ from twitchAPI import Twitch
 from utils.twitchAPI import changeChannelInformation, getIDOfAChannel
 from models.videoEncoding import Encoding, Resolution
 import ffmpeg
+from utils.logger import getChildLogger
 
 class StreamLauncher:
     knownTwitchEncoding : list[Encoding] = Resolution.values()
     
     def __init__(self, event : Event, twitchAPI : Twitch, appID : str, appSecret : str, getStreamID : str, streamChannel : str):
+        self.logger = getChildLogger("streamLauncher")
+        
         self.event = event
         self.appID = appID
         self.appSecret = appSecret
@@ -45,13 +48,13 @@ class StreamLauncher:
             try:
                 streams = streamLink.streams(url)
             except NoPluginError:
-                print("Livestreamer is unable to handle the URL '{0}'".format(url))
+                self.logger.info("Livestreamer is unable to handle the URL '{0}'".format(url))
             except PluginError as err:
-                print("Plugin error: {0}".format(err))
+                self.logger.info("Plugin error: {0}".format(err))
                 
 
             if not streams:
-                print("No streams found on URL '{0}'".format(url))
+                self.logger.info("No streams found on URL '{0}'".format(url))
                 time.sleep(10)
             else:
                 for quality in self.knownTwitchEncoding:
@@ -64,18 +67,20 @@ class StreamLauncher:
                 else:
                     time.sleep(10)
                 
-        print(f"Starting to stream with quality : {maxQuality}")
+        self.logger.info(f"Starting to stream with quality : {maxQuality}")
         self.initChannelInformation()
         
         stream = streams[maxQuality]
+        fd = None
+        
         while(datetime.utcnow() < self.event.endTime):
             try:
                 fd = stream.open()
                 break
             except BaseException as err:
-                print(err)
+                self.logger.error(err)
                 time.sleep(10)
-        print("Stream opened.")
+        self.logger.info("Stream opened.")
         
         process = (
             ffmpeg.input("pipe:")
@@ -83,10 +88,11 @@ class StreamLauncher:
             .run_async(pipe_stdin=True)
         )
         
-        while(datetime.utcnow() < self.event.endTime):
-            process.stdin.write(fd.read(2**8))
-        process.stdin.close()
-        fd.close()
+        if(fd is not None):
+            while(datetime.utcnow() < self.event.endTime):
+                process.stdin.write(fd.read(2**8))
+            process.stdin.close()
+            fd.close()
         
         self.resetChannelInformation()
 

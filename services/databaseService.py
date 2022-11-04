@@ -7,10 +7,12 @@ from models.uploaderStatus import UploaderStatus
 from models.resultAnalyze import ResultAnalyze
 from models.uploader import UploaderModel
 from models.event import Event
+from utils.logger import getChildLogger
 
 class DataBaseService:
     
     def __init__(self, mongoDBConnectionString : str, dataBaseName : str):
+        self.logger = getChildLogger("databaseService")
         self.client = MongoClient(host=mongoDBConnectionString)
         self.database = self.client[dataBaseName]
         self.uploadersCollection = self.database.get_collection("clusters")

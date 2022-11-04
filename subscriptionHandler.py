@@ -7,16 +7,22 @@ from subscriptionHandlerEndpoint import SubscriptionHandlerEndPoint
 from utils.twitchAPI import createNewSubscription, deleteSubscriptionByID, generateRandomString
 from twitchAPI import Twitch
 from threading import Thread
+import os
+from utils.logger import getChildLogger
 
 class SubscriptionHandler:
     
     def __init__(self, twitchAPI : Twitch, myIP : str, portToListen : int, multiThreadEventQueue : Queue, event : Event = None) -> None:
-        
+        self.logger = getChildLogger("subscriptionHandler")
+
         self.myIP = myIP
         self.twitchAPI = twitchAPI
         self.portToListen = portToListen
         
         self.isWebServerLaunched = False
+        basePathToCertbotCertificates = os.path.join("C:", "Certbot", "live", self.myIP)
+        self.pathToPrivkey = os.path.join(basePathToCertbotCertificates, "privkey.pem")
+        self.pathTofullchain = os.path.join(basePathToCertbotCertificates, "fullchain.pem")
         
         self.secretSubscriptionOurChannel : str = generateRandomString(100)
         self.followerSubscriptionID = None
@@ -25,6 +31,7 @@ class SubscriptionHandler:
         self.event = event
         
         self.multiThreadEventQueue = multiThreadEventQueue
+        self.__launchWebServer()
     
     def setEvent(self, event : Event) -> None:
         self.event = event
@@ -37,7 +44,7 @@ class SubscriptionHandler:
         if not self.isWebServerLaunched:
             self.subscriptionHandler = partial(SubscriptionHandlerEndPoint, self.secretSubscriptionOurChannel, self.multiThreadEventQueue)
             self.httpServer = HTTPServer(('', self.portToListen), self.subscriptionHandler)
-            self.httpServer.socket = ssl.wrap_socket(self.httpServer.socket, keyfile=f"C:\\Certbot\\live\\{self.myIP}\\privkey.pem" , certfile=f'C:\\Certbot\\live\\{self.myIP}\\fullchain.pem', server_side=True)
+            self.httpServer.socket = ssl.wrap_socket(self.httpServer.socket, keyfile=self.pathToPrivkey , certfile=self.pathTofullchain, server_side=True)
             self.serverThread = Thread(target=self.__server_forever)
             self.serverThread.daemon = True
             self.serverThread.start()
@@ -53,7 +60,7 @@ class SubscriptionHandler:
             self.followerSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()
         else:
-            print(f"Error creating follower subscription, status code : {response.status_code}")
+            self.logger.error(f"Error creating follower subscription, status code : {response.status_code}")
     
     def createSubscriptionSubscription(self, channelName : str) -> None:
         response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, channelName, "channel.subscribe", f"https://{self.myIP}/subscriptionHandler")
@@ -61,12 +68,12 @@ class SubscriptionHandler:
             self.SubscriptionSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()
         else:
-            print(f"Error creating sub subscription, status code : {response.status_code}")
+            self.logger.error(f"Error creating sub subscription, status code : {response.status_code}")
     
     def shutdown(self):
         if self.isWebServerLaunched:
-            print("Stopping the subscription web server...")
+            self.logger.info("Stopping the subscription web server...")
             self.httpServer.shutdown()
             self.serverThread.join()
             self.isWebServerLaunched = False
-            print("Subscription web server stopped.")
+            self.logger.info("Subscription web server stopped.")

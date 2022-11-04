@@ -82,7 +82,7 @@ def listAllEventSub(twitchAPI : Twitch) -> list[dict]:
     print(result)
     return result
 
-def validateSignature(webhook_secret : str, headers : dict[str, bytes], body : str) -> bool:
+def validateSignature(webhook_secret : str, headers, body : str) -> bool:
     message_id = str(headers['twitch-eventsub-message-id'])
     message_timestamp = str(headers['twitch-eventsub-message-timestamp'])
     message_signature = str(headers['twitch-eventsub-message-signature'])
