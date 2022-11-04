@@ -13,7 +13,8 @@ class StreamLauncher:
     
     def __init__(self, event : Event, twitchAPI : Twitch, appID : str, appSecret : str, getStreamID : str, streamChannel : str):
         self.logger = getChildLogger("streamLauncher")
-        
+        self.exitInstruction = False
+
         self.event = event
         self.appID = appID
         self.appSecret = appSecret
@@ -44,7 +45,7 @@ class StreamLauncher:
         # Attempt to fetch streams
         foundStream = False
         maxQuality = None
-        while(datetime.utcnow() < self.event.endTime and not foundStream):
+        while(datetime.utcnow() < self.event.endTime and not foundStream and not self.exitInstruction):
             try:
                 streams = streamLink.streams(url)
             except NoPluginError:
@@ -73,7 +74,7 @@ class StreamLauncher:
         stream = streams[maxQuality]
         fd = None
         
-        while(datetime.utcnow() < self.event.endTime):
+        while(datetime.utcnow() < self.event.endTime and not self.exitInstruction):
             try:
                 fd = stream.open()
                 break
@@ -89,7 +90,7 @@ class StreamLauncher:
         )
         
         if(fd is not None):
-            while(datetime.utcnow() < self.event.endTime):
+            while(datetime.utcnow() < self.event.endTime and not self.exitInstruction):
                 process.stdin.write(fd.read(2**8))
             process.stdin.close()
             fd.close()

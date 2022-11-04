@@ -10,7 +10,6 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
         self.logger = getChildLogger("subscriptionHandlerEndPoint")
         self.secretSubscriptionOurChannel = secretSubscriptionOurChannel
         self.multiThreadEventQueue = multiThreadEventQueue
-        self.logger.info("Subscription endpoint launched !")
         super().__init__(*args, **kwargs)
     
     def do_POST(self):

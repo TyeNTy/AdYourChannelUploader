@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from multiprocessing import Queue
 import os
 import sys
@@ -44,6 +44,7 @@ class Uploader:
         self.multiThreadChangeHostQueue : Queue = Queue()
         self.multiThreadEventQueue : Queue = Queue()
         
+        self.streamLauncher = None
         self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.myIP, 443, self.multiThreadEventQueue)
         
         self.target_scopes = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
@@ -67,6 +68,8 @@ class Uploader:
             if line.strip() == "exit":
                 self.logger.info("Stdin Thread received exit instruction...")
                 self.exitInstruction = True
+                if(self.streamLauncher is not None):
+                    self.streamLauncher.exitInstruction = True
                 break
         
     def _saveTokensFromTwitchAPI(self, fileName : str, twitchAPI : Twitch):
@@ -120,12 +123,12 @@ class Uploader:
         if(user is not None):
             self.__createSubscriptions(event)
             
-            streamLauncher = StreamLauncher(event, self.twitchAPI, self.appID, self.appSecret, self.getStreamID, self.streamChannel)
+            self.streamLauncher = StreamLauncher(event, self.twitchAPI, self.appID, self.appSecret, self.getStreamID, self.streamChannel)
             streamAnalyzer = Analyzer(event, self.twitchAPI, self.appID, self.appSecret, self.streamChannel, self.multiThreadEventQueue)
             pool = ThreadPool(processes=1)
             asyncResult = pool.apply_async(streamAnalyzer.launchAnalyzer, ())
             pool.close()
-            streamLauncher.runStreaming()
+            self.streamLauncher.runStreaming()
             allStatistics = asyncResult.get()
             analyzerProcessor = AnalyzerProcessor(self.twitchAPI, self.streamChannel, event, allStatistics, self.dataBaseService)
             self.analyzerThreads.append(Thread(target=analyzerProcessor.launchAnalyze, args=()))
@@ -136,24 +139,30 @@ class Uploader:
         
     
     def run(self) -> None:
+        timeBetweenCheckEvent = timedelta(seconds=10)
+
         isStreaming = False
         self.__initChatBot()
+        currentTime = datetime.utcnow()
+        nextCheck = currentTime + timeBetweenCheckEvent
         try:
             while(not self.exitInstruction):
                 try:
-                    nextEvent = self.dataBaseService.getNextEvent(self.clusterName, self.id, self.language)
-                    if(nextEvent is not None):
-                        self.logger.info(f"New event found - {nextEvent}")
-                        isStreaming = True
-                        self.multiThreadChangeHostQueue.put(nextEvent)
-                        self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.STREAMING)
-                        self.runStreaming(nextEvent)
-                        self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.IDLE)
-                        isStreaming = False
-                    else:
-                        self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.IDLE)
-                        self.logger.info(f"No event found...")
-                        time.sleep(10)
+                    currentTime = datetime.utcnow()
+                    if(currentTime > nextCheck):
+                        nextCheck = currentTime + timeBetweenCheckEvent
+                        nextEvent = self.dataBaseService.getNextEvent(self.clusterName, self.id, self.language)
+                        if(nextEvent is not None):
+                            self.logger.info(f"New event found - {nextEvent}")
+                            isStreaming = True
+                            self.multiThreadChangeHostQueue.put(nextEvent)
+                            self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.STREAMING)
+                            self.runStreaming(nextEvent)
+                            self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.IDLE)
+                            isStreaming = False
+                        else:
+                            self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.IDLE)
+                            self.logger.info(f"No event found...")
                 except Exception as err:
                     self.logger.error(err)
         finally:
