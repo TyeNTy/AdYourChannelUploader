@@ -1,15 +1,16 @@
 from http.server import BaseHTTPRequestHandler
 import json
 from multiprocessing import Queue
+from typing import Any
 from utils.twitchAPI import validateSignature
 from utils.logger import getChildLogger
 
 class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
     def __init__(self, secretSubscriptionOurChannel : str, multiThreadEventQueue : Queue, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
         self.logger = getChildLogger("subscriptionHandlerEndPoint")
         self.secretSubscriptionOurChannel = secretSubscriptionOurChannel
         self.multiThreadEventQueue = multiThreadEventQueue
+        super().__init__(*args, **kwargs)
     
     def do_POST(self):
         body = str(self.rfile.read(int(self.headers['Content-Length'])), "utf-8")
@@ -34,3 +35,12 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"FORBIDDEN")
             self.logger.warning(f"Get request from {self.client_address}")
+    
+    def log_error(self, format: str, *args: Any) -> None:
+        return self.logger.error(format%args)
+    
+    def log_request(self, code: int | str = ..., size: int | str = ...) -> None:
+        return self.logger.info(f"{self.requestline} - {size} - {code}")
+
+    def log_message(self, format: str, *args: Any) -> None:
+        return self.logger.info(format%args)
