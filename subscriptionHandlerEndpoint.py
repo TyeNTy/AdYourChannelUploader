@@ -10,6 +10,7 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
         self.logger = getChildLogger("subscriptionHandlerEndPoint")
         self.secretSubscriptionOurChannel = secretSubscriptionOurChannel
         self.multiThreadEventQueue = multiThreadEventQueue
+        self.logger.info("Subscription endpoint launched !")
     
     def do_POST(self):
         body = str(self.rfile.read(int(self.headers['Content-Length'])), "utf-8")

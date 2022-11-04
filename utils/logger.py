@@ -15,7 +15,7 @@ def loadConfig() -> None:
         'disable_existing_loggers': False,
         'formatters': {
             'default_formatter': {
-                'format': '[%(levelname)s:%(asctime)s] %(message)s',
+                'format': '[%(asctime)s:%(levelname)s] %(message)s',
                 "datefmt":"%d-%m-%Y %I:%M:%S"
             },
         },
