@@ -69,7 +69,7 @@ class Uploader:
                 self.logger.info("Stdin Thread received exit instruction...")
                 self.exitInstruction = True
                 if(self.streamLauncher is not None):
-                    self.streamLauncher.exitInstruction = True
+                    self.streamLauncher.cutStream()
                 break
         
     def _saveTokensFromTwitchAPI(self, fileName : str, twitchAPI : Twitch):

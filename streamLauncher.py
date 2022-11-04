@@ -31,6 +31,9 @@ class StreamLauncher:
 
     def initChannelInformation(self):
         changeChannelInformation(self.twitchAPI, self.streamChannel, self.event.streamTitle, self.event.language)
+    
+    def cutStream(self):
+        self.exitInstruction = True
 
     def runStreaming(self):
         # Collect arguments
@@ -71,29 +74,30 @@ class StreamLauncher:
         self.logger.info(f"Starting to stream with quality : {maxQuality}")
         self.initChannelInformation()
         
-        stream = streams[maxQuality]
-        fd = None
-        
-        while(datetime.utcnow() < self.event.endTime and not self.exitInstruction):
-            try:
-                fd = stream.open()
-                break
-            except BaseException as err:
-                self.logger.error(err)
-                time.sleep(10)
-        self.logger.info("Stream opened.")
-        
-        process = (
-            ffmpeg.input("pipe:")
-            .output(f"{self.streamingServer}{self.streamKey}", vcodec="copy", acodec="copy", f="flv", loglevel="quiet")
-            .run_async(pipe_stdin=True)
-        )
-        
-        if(fd is not None):
+        if(maxQuality is not None):
+            stream = streams[maxQuality]
+            fd = None
+            
             while(datetime.utcnow() < self.event.endTime and not self.exitInstruction):
-                process.stdin.write(fd.read(2**8))
-            process.stdin.close()
-            fd.close()
+                try:
+                    fd = stream.open()
+                    break
+                except BaseException as err:
+                    self.logger.error(err)
+                    time.sleep(10)
+            self.logger.info("Stream opened.")
+            
+            process = (
+                ffmpeg.input("pipe:")
+                .output(f"{self.streamingServer}{self.streamKey}", vcodec="copy", acodec="copy", f="flv", loglevel="quiet")
+                .run_async(pipe_stdin=True)
+            )
+            
+            if(fd is not None):
+                while(datetime.utcnow() < self.event.endTime and not self.exitInstruction):
+                    process.stdin.write(fd.read(2**8))
+                process.stdin.close()
+                fd.close()
         
         self.resetChannelInformation()
 
