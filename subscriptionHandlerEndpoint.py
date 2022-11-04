@@ -2,9 +2,11 @@ from http.server import BaseHTTPRequestHandler
 import json
 from multiprocessing import Queue
 from utils.twitchAPI import validateSignature
+from utils.logger import getChildLogger
 
 class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
     def __init__(self, secretSubscriptionOurChannel : str, multiThreadEventQueue : Queue, *args, **kwargs) -> None:
+        self.logger = getChildLogger("subscriptionHandlerEndPoint")
         self.secretSubscriptionOurChannel = secretSubscriptionOurChannel
         self.multiThreadEventQueue = multiThreadEventQueue
         super().__init__(*args, **kwargs)
@@ -21,7 +23,7 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.end_headers()
                     self.wfile.write(bytes(challenge, "utf-8"))
-                    print(f"Creation of {bodyDict['subscription']['type']} subscription successful")
+                    self.logger.info(f"Creation of {bodyDict['subscription']['type']} subscription successful")
                 return
             elif(self.headers["twitch-eventsub-message-type"] == "notification"):
                 self.multiThreadEventQueue.put((self.headers, bodyDict))
@@ -31,3 +33,4 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
             self.send_response(403)
             self.end_headers()
             self.wfile.write(b"FORBIDDEN")
+            self.logger.warning(f"Get request from {self.client_address}")

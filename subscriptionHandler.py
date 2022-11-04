@@ -42,6 +42,7 @@ class SubscriptionHandler:
     
     def __launchWebServer(self) -> None:
         if not self.isWebServerLaunched:
+            self.logger.info("Launching web server for handling subscriptions...")
             self.subscriptionHandler = partial(SubscriptionHandlerEndPoint, self.secretSubscriptionOurChannel, self.multiThreadEventQueue)
             self.httpServer = HTTPServer(('', self.portToListen), self.subscriptionHandler)
             self.httpServer.socket = ssl.wrap_socket(self.httpServer.socket, keyfile=self.pathToPrivkey , certfile=self.pathTofullchain, server_side=True)
@@ -49,6 +50,7 @@ class SubscriptionHandler:
             self.serverThread.daemon = True
             self.serverThread.start()
             self.isWebServerLaunched = True
+            self.logger.info("Launching web server for handling subscriptions... DONE !")
     
     def __server_forever(self):
         with self.httpServer:
@@ -60,7 +62,7 @@ class SubscriptionHandler:
             self.followerSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()
         else:
-            self.logger.error(f"Error creating follower subscription, status code : {response.status_code}")
+            self.logger.warning(f"Error creating follower subscription, status code : {response.status_code}")
     
     def createSubscriptionSubscription(self, channelName : str) -> None:
         response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, channelName, "channel.subscribe", f"https://{self.myIP}/subscriptionHandler")
@@ -68,7 +70,7 @@ class SubscriptionHandler:
             self.SubscriptionSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()
         else:
-            self.logger.error(f"Error creating sub subscription, status code : {response.status_code}")
+            self.logger.warning(f"Error creating sub subscription, status code : {response.status_code}")
     
     def shutdown(self):
         if self.isWebServerLaunched:
