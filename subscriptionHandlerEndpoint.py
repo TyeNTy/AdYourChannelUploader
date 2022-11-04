@@ -6,10 +6,10 @@ from utils.logger import getChildLogger
 
 class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
     def __init__(self, secretSubscriptionOurChannel : str, multiThreadEventQueue : Queue, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.logger = getChildLogger("subscriptionHandlerEndPoint")
         self.secretSubscriptionOurChannel = secretSubscriptionOurChannel
         self.multiThreadEventQueue = multiThreadEventQueue
-        super().__init__(*args, **kwargs)
     
     def do_POST(self):
         body = str(self.rfile.read(int(self.headers['Content-Length'])), "utf-8")

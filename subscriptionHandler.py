@@ -47,7 +47,6 @@ class SubscriptionHandler:
             self.httpServer = HTTPServer(('', self.portToListen), self.subscriptionHandler)
             self.httpServer.socket = ssl.wrap_socket(self.httpServer.socket, keyfile=self.pathToPrivkey , certfile=self.pathTofullchain, server_side=True)
             self.serverThread = Thread(target=self.__server_forever)
-            self.serverThread.daemon = True
             self.serverThread.start()
             self.isWebServerLaunched = True
             self.logger.info("Launching web server for handling subscriptions... DONE !")
