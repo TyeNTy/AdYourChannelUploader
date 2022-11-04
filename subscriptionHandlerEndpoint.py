@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 import json
 from multiprocessing import Queue
+from typing import Any
 from utils.twitchAPI import validateSignature
 from utils.logger import getChildLogger
 
@@ -35,3 +36,12 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"FORBIDDEN")
             self.logger.warning(f"Get request from {self.client_address}")
+    
+    def log_error(self, format: str, *args: Any) -> None:
+        return self.logger.error(format)
+    
+    def log_request(self, code: int | str = ..., size: int | str = ...) -> None:
+        return self.logger.info(f"Receivedd a request of size {size}. Returned code : {code}")
+
+    def log_message(self, format: str, *args: Any) -> None:
+        return self.logger.info(format)
