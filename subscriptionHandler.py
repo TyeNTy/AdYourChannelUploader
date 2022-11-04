@@ -20,7 +20,7 @@ class SubscriptionHandler:
         self.portToListen = portToListen
         
         self.isWebServerLaunched = False
-        basePathToCertbotCertificates = os.path.join("C:", "Certbot", "live", self.myIP)
+        basePathToCertbotCertificates = os.path.join(os.sep, "C:" + os.sep, "Certbot", "live", self.myIP)
         self.pathToPrivkey = os.path.join(basePathToCertbotCertificates, "privkey.pem")
         self.pathTofullchain = os.path.join(basePathToCertbotCertificates, "fullchain.pem")
         
