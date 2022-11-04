@@ -38,10 +38,10 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
             self.logger.warning(f"Get request from {self.client_address}")
     
     def log_error(self, format: str, *args: Any) -> None:
-        return self.logger.error(format)
+        return self.logger.error(format%args)
     
     def log_request(self, code: int | str = ..., size: int | str = ...) -> None:
-        return self.logger.info(f"Receivedd a request of size {size}. Returned code : {code}")
+        return self.logger.info(f"{self.requestline} - {size} - {code}")
 
     def log_message(self, format: str, *args: Any) -> None:
-        return self.logger.info(format)
+        return self.logger.info(format%args)
