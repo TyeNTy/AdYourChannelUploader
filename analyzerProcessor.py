@@ -8,9 +8,12 @@ from models.statisticTimeline import StatisticTimeline
 from models.subscribeEvent import SubscribeEvent
 from twitchAPI import Twitch
 from utils.twitchAPI import checkFollow, getIDOfAChannel
+from utils.logger import getChildLogger
 
 class AnalyzerProcessor:
     def __init__(self, twitchAPI : Twitch, channelName : str, event : Event, data : list[Statistic], dataBaseService : IDataBaseService) -> None:
+        self.logger = getChildLogger("analyzerProcessor")
+        
         self.event = event
         self.data = data
         self.dataBaseService = dataBaseService
@@ -72,16 +75,16 @@ class AnalyzerProcessor:
         return timeline
     
     def launchAnalyze(self) -> ResultAnalyze:
-        print("Starting to analyze the data...")
+        self.logger.info("Starting to analyze the data...")
         listNewViewers = self.getViewerWhoOnlyWentToTheOtherChannel()
         newFollowers = self.allNewFollows()
         newSubscribers = self.allNewSubs()
         timeline = self.__createTimeline(listNewViewers, newFollowers, newSubscribers)
         resultAnalyze = ResultAnalyze(self.event.id, timeline)
-        print("Analyzing the data... Done")
-        print("Sending the result to the database...")
+        self.logger.info("Analyzing the data... Done")
+        self.logger.info("Sending the result to the database...")
         self.dataBaseService.addResultAnalyze(resultAnalyze)
-        print("Sending the result to the database... Done")
+        self.logger.info("Sending the result to the database... Done")
         return resultAnalyze
     
     def launchAnalyzeAndUploadItToDatabase(self):
