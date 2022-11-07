@@ -3,6 +3,7 @@ import time
 from streamlink import Streamlink, NoPluginError, PluginError
 from models.event import Event
 from twitchAPI import Twitch
+from translation import Translation
 from utils.twitchAPI import changeChannelInformation, getIDOfAChannel
 from models.videoEncoding import Encoding, Resolution
 import ffmpeg
@@ -10,9 +11,10 @@ from utils.logger import getChildLogger
 
 class StreamLauncher:
     knownTwitchEncoding : list[Encoding] = Resolution.values()
+    nameClass = "streamLauncher"
     
     def __init__(self, event : Event, twitchAPI : Twitch, appID : str, appSecret : str, getStreamID : str, streamChannel : str):
-        self.logger = getChildLogger("streamLauncher")
+        self.logger = getChildLogger(self.nameClass)
         self.exitInstruction = False
 
         self.event = event
@@ -21,13 +23,14 @@ class StreamLauncher:
         self.getStreamID = getStreamID
         self.twitchAPI = twitchAPI
         self.streamChannel = streamChannel
+        self.translations = Translation(self.event.language, self.nameClass)
         
         self.streamingServer = "rtmp://cdg10.contribute.live-video.net/app/"
         
         self.streamKey = self.twitchAPI.get_stream_key(getIDOfAChannel(self.twitchAPI, self.streamChannel))["data"][0]["stream_key"]
 
     def resetChannelInformation(self):
-        changeChannelInformation(self.twitchAPI, self.streamChannel, f"!{self.streamChannel}", self.event.language)
+        changeChannelInformation(self.twitchAPI, self.streamChannel, self.translations['baseTitle'] , self.event.language)
 
     def initChannelInformation(self):
         changeChannelInformation(self.twitchAPI, self.streamChannel, self.event.streamTitle, self.event.language)
