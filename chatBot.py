@@ -1,7 +1,7 @@
 from twitchio.ext import commands, routines
 from multiprocessing import Queue
 from models.event import Event
-from utils.translationHelpers import loadTranslations
+from translation import Translation
 from twitchAPI import Twitch
 
 
@@ -14,7 +14,7 @@ class ChatBot(commands.Bot):
         self.newHostQueue = newHostQueue
         self.channelName = channelName
         self.language = language
-        self.translations = loadTranslations(self.language, pathFile="chatbot")
+        self.translations : Translation = Translation(self.language, pathFile="chatbot")
         
         self.currentEvent : Event = None
         self.change_channel.start()
@@ -44,6 +44,10 @@ class ChatBot(commands.Bot):
     @commands.command(name="help")
     async def help(self, ctx : commands.core.Context):
         await self.get_channel(self.channelName).send(self.translations['help'].format())
+    
+    @commands.command(name="discord")
+    async def discord(self, ctx : commands.core.Context):
+        await self.get_channel(self.channelName).send(self.translations['discord'].format())
         
     @commands.command(name="channel")
     async def channel(self, ctx : commands.core.Context):

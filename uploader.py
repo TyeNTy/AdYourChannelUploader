@@ -163,6 +163,8 @@ class Uploader:
                         else:
                             self.dataBaseService.updateStatusUploader(self.clusterName, self.id, UploaderStatus.IDLE)
                             self.logger.info(f"No event found...")
+                    else:
+                        time.sleep(1)
                 except Exception as err:
                     self.logger.error(err)
         finally:
