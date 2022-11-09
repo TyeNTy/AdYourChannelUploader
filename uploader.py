@@ -20,6 +20,8 @@ from utils.logger import getChildLogger
 from utils.twitchAPI import listAllEventSub
 
 class Uploader:
+    target_scopes = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY, AuthScope.CHAT_EDIT, AuthScope.CHAT_READ]
+    
     def __init__(self, clusterName : str, language : str, dataBaseService : IDataBaseService, myIP : str, appID : str, appSecret : str, getStreamID : str, streamChannel : str) -> None:
         self.logger = getChildLogger("uploader")
         
@@ -38,7 +40,7 @@ class Uploader:
         
         self.getStreamID = getStreamID
         
-        self.twitchAPI = Twitch(self.appID, self.appSecret)
+        self.twitchAPI = Twitch(self.appID, self.appSecret, authenticate_app=True, target_app_auth_scope=self.target_scopes)
         self.twitchAPI.auto_refresh_auth = True
     
         self.multiThreadChangeHostQueue : Queue = Queue()
@@ -47,7 +49,6 @@ class Uploader:
         self.streamLauncher = None
         self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.myIP, 443, self.multiThreadEventQueue)
         
-        self.target_scopes = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.CHANNEL_READ_SUBSCRIPTIONS, AuthScope.CHANNEL_READ_STREAM_KEY]
         auth = UserAuthenticator(self.twitchAPI, self.target_scopes, force_verify=False, url='http://localhost:17563')
         # this will open your default browser and prompt you with the twitch verification website
         token, refresh_token = self._loadStartup(self.startupFileName, auth)
@@ -105,18 +106,11 @@ class Uploader:
         self.logger.info("Deleting the subscriptions... DONE !")
 
     def __initChatBot(self) -> None:
-        scopes = [AuthScope.CHAT_EDIT, AuthScope.CHAT_READ, AuthScope.CHANNEL_MANAGE_BROADCAST]
-        twitchAPIChat = Twitch(self.appID, self.appSecret)
-        twitchAPIChat.auto_refresh_auth = True
-        auth = UserAuthenticator(twitchAPIChat, scopes, force_verify=False, url='http://localhost:17563')
-        token, refresh_token = self._loadStartup(self.startupChatFileName, auth)
-        twitchAPIChat.set_user_authentication(token, scopes, refresh_token)
-        twitchAPIChat.refresh_used_token()
-        self._saveTokensFromTwitchAPI(self.startupChatFileName, twitchAPIChat)
-        self.multiThreadChangeHostQueue = Queue()
-        self.chatBot = ChatBot(self.streamChannel, twitchAPIChat, self.multiThreadChangeHostQueue, self.language)
+        self.logger.info("Launching the chat bot...")
+        self.chatBot = ChatBot(self.streamChannel, self.twitchAPI, self.multiThreadChangeHostQueue, self.language)
         self.chatBotThreadPool = ThreadPool(processes=1)
         self.chatBotThreadPool.apply_async(self.chatBot.run, ())
+        self.logger.info("Launching the chat bot... DONE !")
         
     def runStreaming(self, event : Event) -> None:
         user = self.dataBaseService.getUserByName(event.twitchUserName)
@@ -181,6 +175,5 @@ class Uploader:
                 thread.join()
             self.logger.info("Waiting the analyzer threads... DONE !")
             self._saveTokensFromTwitchAPI(self.startupFileName, self.twitchAPI)
-            self._saveTokensFromTwitchAPI(self.startupChatFileName, self.chatBot.twitchAPI)
             self.logger.info("Deleting the uploader in the database... DONE !")
             sys.exit(0)

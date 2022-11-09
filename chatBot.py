@@ -9,7 +9,7 @@ from twitchAPI import Twitch
 class ChatBot(commands.Bot):
 
     def __init__(self, channelName : str, twitchAPI : Twitch, newHostQueue : Queue, language : str):
-        super().__init__(token=twitchAPI.get_user_auth_token(), prefix='!', initial_channels=[channelName])
+        super().__init__(token=f"{twitchAPI.get_user_auth_token()}", prefix='!', initial_channels=[channelName])
         self.twitchAPI = twitchAPI
         self.newHostQueue = newHostQueue
         self.channelName = channelName
@@ -17,10 +17,11 @@ class ChatBot(commands.Bot):
         self.translations : Translation = Translation(self.language, pathFile="chatbot")
         
         self.currentEvent : Event = None
-        self.change_channel.start()
+        self.changeChannelRoutine.start()
+        self.channelRoutine.start()
     
     @routines.routine(seconds=10.0)
-    async def change_channel(self):
+    async def changeChannelRoutine(self):
         while(not self.newHostQueue.empty()):
             self.currentEvent : Event = self.newHostQueue.get()
             print(f"Chat bot : getting new channel {self.currentEvent.twitchUserName}")
@@ -49,10 +50,17 @@ class ChatBot(commands.Bot):
     async def discord(self, ctx : commands.core.Context):
         await self.get_channel(self.channelName).send(self.translations['discord'].format())
         
-    @commands.command(name="channel")
-    async def channel(self, ctx : commands.core.Context):
+    async def __sendChannelMessage(self):
         if(self.currentEvent is None):
             await self.get_channel(self.channelName).send(self.translations['channelNoEventYet'].format())
         else:
             await self.get_channel(self.channelName).send(self.translations['channel'].format(self.currentEvent.twitchUserName, self.currentEvent.twitchUserName))
+        
+    @routines.routine(minutes=3.0, wait_first=True)
+    async def channelRoutine(self):
+        await self.__sendChannelMessage()
+        
+    @commands.command(name="channel")
+    async def channel(self, ctx : commands.core.Context):
+        await self.__sendChannelMessage()
         

@@ -26,7 +26,7 @@ class DataBaseService:
         """Try to get the next event to take place in the uploaderID uploader inside of the cluster clusterName."""
         currentDate = datetime.utcnow()
         minDate = datetime(currentDate.year, currentDate.month, currentDate.day, currentDate.hour, 0, 0, 0)
-        maxDate = datetime(currentDate.year, currentDate.month, currentDate.day, currentDate.hour + 1, 0, 0, 0)
+        maxDate = datetime(currentDate.year, currentDate.month, currentDate.day, currentDate.hour, 0, 0, 0) + timedelta(minutes=59, seconds=59)
         cursor = self.database.get_collection(language).find({"clusterName" : clusterName, "uploaderID" : uploaderID, "language" : language, "startTime": {"$gte": minDate}, "endTime": {"$lte": maxDate, "$gte" : currentDate}}).sort("startTime", DESCENDING)
         result = list(cursor)
         if (result is None):
