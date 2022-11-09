@@ -62,7 +62,7 @@ class StreamLauncher:
 
             if not streams:
                 self.logger.info("No streams found on URL '{0}'".format(url))
-                time.sleep(10)
+                time.sleep(20)
             else:
                 for quality in self.knownTwitchEncoding:
                     if quality in streams:
@@ -72,7 +72,7 @@ class StreamLauncher:
                 if maxQuality is not None:
                     foundStream = True
                 else:
-                    time.sleep(10)
+                    time.sleep(20)
                 
         self.logger.info(f"Starting to stream with quality : {maxQuality}")
         self.initChannelInformation()

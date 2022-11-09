@@ -24,6 +24,8 @@ def initUploader(configuration : dict[str, str]) -> None:
     
     databaseService = DataBaseService(configuration["DATABASE_CONNECTION_STRING"], configuration["DATABASE_NAME"])
     
+    # databaseService.getNextEvent("cluster1", 1, "fr")
+    
     # generateRandomEvents(databaseService)
     
     # databaseService.createEvent(Event(None, "rlgym", "cluster1", 0, datetime.utcnow(), datetime.utcnow() + timedelta(minutes=4), "fr", "test", ["this", "is", "a", "test"]))
