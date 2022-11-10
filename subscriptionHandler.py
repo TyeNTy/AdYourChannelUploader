@@ -2,6 +2,7 @@ from functools import partial
 from http.server import *
 from multiprocessing import Queue
 import ssl
+from requests import Response
 from models.event import Event
 from subscriptionHandlerEndpoint import SubscriptionHandlerEndPoint
 from utils.twitchAPI import createNewSubscription, deleteSubscriptionByID, generateRandomString
@@ -56,20 +57,33 @@ class SubscriptionHandler:
             self.httpServer.serve_forever()
 
     def createFollowerSubscription(self, channelName : str) -> None:
-        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, channelName, "channel.follow", f"https://{self.myIP}/followerHandler")
+        response = self.__createSubscriptionWrapper(channelName, "channel.follow", f"https://{self.myIP}/followerHandler")
         if(response.status_code == 202):
             self.followerSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()
         else:
-            self.logger.warning(f"Error creating follower subscription, status code : {response.status_code}")
+            self.logger.error(f"Error creating follower subscription, status code : {response.status_code}")
     
     def createSubscriptionSubscription(self, channelName : str) -> None:
-        response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, channelName, "channel.subscribe", f"https://{self.myIP}/subscriptionHandler")
+        response = self.__createSubscriptionWrapper(channelName, "channel.subscribe", f"https://{self.myIP}/subscriptionHandler")
         if(response.status_code == 202):
             self.SubscriptionSubscriptionID = response.json()["data"][0]["id"]
             self.__launchWebServer()
         else:
-            self.logger.warning(f"Error creating sub subscription, status code : {response.status_code}")
+            self.logger.error(f"Error creating sub subscription, status code : {response.status_code}")
+    
+    def __createSubscriptionWrapper(self, channelName : str, typeOfSubscription : str, callBackURL : str) -> Response:
+        isSuccess = False
+        attempt = 0
+        while(not isSuccess and attempt < 5):
+            response = createNewSubscription(self.secretSubscriptionOurChannel, self.twitchAPI, channelName, typeOfSubscription, callBackURL)
+            if response.status_code == 202:
+                return response
+            elif response.status_code == 401:
+                self.twitchAPI.refresh_used_token()
+                self.logger.info("Refreshing auth token...")
+            
+        
     
     def shutdown(self):
         if self.isWebServerLaunched:

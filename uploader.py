@@ -14,6 +14,7 @@ from models.uploader import UploaderModel
 from streamLauncher import StreamLauncher
 from multiprocessing.pool import ThreadPool
 from twitchAPI import Twitch, AuthScope, UserAuthenticator
+from twitchAPI.types import InvalidTokenException
 from subscriptionHandler import SubscriptionHandler
 from utils.logger import getChildLogger
 
@@ -47,14 +48,15 @@ class Uploader:
         self.multiThreadEventQueue : Queue = Queue()
         
         self.streamLauncher = None
-        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.myIP, 443, self.multiThreadEventQueue)
         
         auth = UserAuthenticator(self.twitchAPI, self.target_scopes, force_verify=False, url='http://localhost:17563')
         # this will open your default browser and prompt you with the twitch verification website
         token, refresh_token = self._loadStartup(self.startupFileName, auth)
-        self.twitchAPI.set_user_authentication(token, self.target_scopes, refresh_token)
+        self.twitchAPI.set_user_authentication(token, self.target_scopes, refresh_token, validate=False)
         self.twitchAPI.refresh_used_token()
         self._saveTokensFromTwitchAPI(self.startupFileName, self.twitchAPI)
+        
+        self.subscriptionHandler = SubscriptionHandler(self.twitchAPI, self.myIP, 443, self.multiThreadEventQueue)
         
         newUploaderModel = dataBaseService.addUploader(clusterName, UploaderModel(clusterName, language, datetime.utcnow()))
         self.id = newUploaderModel.id
@@ -84,15 +86,19 @@ class Uploader:
             f.write(refresh_token + "\n")
     
     def _loadStartup(self, fileName : str, auth : UserAuthenticator) -> tuple[str, str]:
-        if(os.path.exists(fileName)):
-            with open(fileName, "r") as f:
-                lines = f.readlines()
-            token = lines[0].replace("\n", "")
-            refresh_token = lines[1].replace("\n", "")
-        else:
+        try:
+            if(os.path.exists(fileName)):
+                with open(fileName, "r") as f:
+                    lines = f.readlines()
+                token = lines[0].replace("\n", "")
+                refresh_token = lines[1].replace("\n", "")
+            else:
+                token, refresh_token = auth.authenticate()
+                self._saveTokens(fileName, token, refresh_token)
+            return token, refresh_token
+        except IndexError:
             token, refresh_token = auth.authenticate()
             self._saveTokens(fileName, token, refresh_token)
-        return token, refresh_token
     
     def __createSubscriptions(self, event : Event) -> None:
         self.subscriptionHandler.createFollowerSubscription(event.twitchUserName)
