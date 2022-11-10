@@ -23,9 +23,9 @@ class StatisticTimeline:
             dateTimestamp = date.timestamp()
             startStatisticTimestamp = timeEvent.startTime.timestamp()
             endStatisticTimestamp = timeEvent.endTime.timestamp()
-            if(startStatisticTimestamp < dateTimestamp and endStatisticTimestamp > dateTimestamp):
+            if(startStatisticTimestamp <= dateTimestamp and endStatisticTimestamp > dateTimestamp):
                 return i
-            elif(startStatisticTimestamp < dateTimestamp):
+            elif(startStatisticTimestamp > dateTimestamp):
                 return -1
         return -1
     
@@ -51,11 +51,11 @@ class StatisticTimeline:
             self.timeline[index].newFollowers += 1
     
     def addNewSubEvent(self, subEvent : SubscribeEvent) -> None:
-        if(subEvent.tier == SubscriberTiers.TIER1):
+        if(subEvent.tier == SubscriberTiers.TIER1.value):
             self.addNewSubTier1(subEvent.subscribedAT)
-        elif(subEvent.tier == SubscriberTiers.TIER2):
+        elif(subEvent.tier == SubscriberTiers.TIER2.value):
             self.addNewSubTier2(subEvent.subscribedAT)
-        elif(subEvent.tier == SubscriberTiers.TIER3):
+        elif(subEvent.tier == SubscriberTiers.TIER3.value):
             self.addNewSubTier3(subEvent.subscribedAT)
     
     def addNewSubTier1(self, date : datetime) -> None:
@@ -65,7 +65,7 @@ class StatisticTimeline:
             self.timeline.append(TimeEvents(minDate, maxDate, 0, 0, 1, 0, 0))
             self.__sortTimelinePerMinute()
         else:
-            self.timeline[index].newSubTier1 += 1
+            self.timeline[index].newSubscribersTier1 += 1
     
     def addNewSubTier2(self, date : datetime) -> None:
         index = self.__findIndexBetweenMinutes(date)
@@ -74,7 +74,7 @@ class StatisticTimeline:
             self.timeline.append(TimeEvents(minDate, maxDate, 0, 0, 0, 1, 0))
             self.__sortTimelinePerMinute()
         else:
-            self.timeline[index].newSubTier2 += 1
+            self.timeline[index].newSubscribersTier2 += 1
     
     def addNewSubTier3(self, date : datetime) -> None:
         index = self.__findIndexBetweenMinutes(date)
@@ -83,7 +83,7 @@ class StatisticTimeline:
             self.timeline.append(TimeEvents(minDate, maxDate, 0, 0, 0, 0, 1))
             self.__sortTimelinePerMinute()
         else:
-            self.timeline[index].newSubTier3 += 1
+            self.timeline[index].newSubscribersTier3 += 1
     
     def toDictionary(self) -> Dict:
         return {
@@ -95,7 +95,7 @@ class StatisticTimeline:
     def __str__(self) -> str:
         txt = ""
         for timeEvent in self.timeline:
-            minDate, maxDate, newViewers, newFollowers, subTier1, subTier2, subTier3 = timeEvent.startTime, timeEvent.endTime, timeEvent.newViewers, timeEvent.newFollowers, timeEvent.newSubTier1, timeEvent.newSubTier2, timeEvent.newSubTier3
+            minDate, maxDate, newViewers, newFollowers, subTier1, subTier2, subTier3 = timeEvent.startTime, timeEvent.endTime, timeEvent.newViewers, timeEvent.newFollowers, timeEvent.newSubscribersTier1, timeEvent.newSubscribersTier2, timeEvent.newSubscribersTier3
             txt += f"{minDate} - {maxDate}\n"
             txt += "\tNew viewers :\n"
             for newViewer in newViewers:

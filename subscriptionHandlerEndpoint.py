@@ -36,6 +36,11 @@ class SubscriptionHandlerEndPoint(BaseHTTPRequestHandler):
             self.wfile.write(b"FORBIDDEN")
             self.logger.warning(f"Get request from {self.client_address}")
     
+    def do_GET(self):
+        self.send_response(403)
+        self.end_headers()
+        self.wfile.write(b"FORBIDDEN")
+    
     def log_error(self, format: str, *args: Any) -> None:
         return self.logger.error(format%args)
     

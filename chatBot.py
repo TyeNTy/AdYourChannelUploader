@@ -9,7 +9,7 @@ from twitchAPI import Twitch
 class ChatBot(commands.Bot):
 
     def __init__(self, channelName : str, twitchAPI : Twitch, newHostQueue : Queue, language : str):
-        super().__init__(token=f"{twitchAPI.get_user_auth_token()}", prefix='!', initial_channels=[channelName])
+        super().__init__(token=twitchAPI.get_user_auth_token(), prefix='!', initial_channels=[channelName])
         self.twitchAPI = twitchAPI
         self.newHostQueue = newHostQueue
         self.channelName = channelName
